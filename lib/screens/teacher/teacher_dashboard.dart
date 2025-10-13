@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../models/user_model.dart';
 import '../../models/discipline_model.dart';
+import '../../theme/app_theme.dart';
 import 'disciplines_screen.dart';
 import 'students_screen.dart';
 import 'messages_screen.dart';
@@ -22,7 +23,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   UserModel? _currentUser;
   List<DisciplineModel> _disciplines = [];
   int _totalStudents = 0;
-  int _unreadMessages = 0;
+  final int _unreadMessages = 0;
   bool _isLoading = true;
 
   @override
@@ -97,115 +98,335 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: const CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Carregando dashboard...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
-        foregroundColor: Colors.white,
-        title: Text('Bem-vindo, ${_currentUser?.name ?? 'Professor'}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
+      backgroundColor: AppTheme.backgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          // AppBar personalizado
+          _buildSliverAppBar(),
+          
+          // Conteúdo principal
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Cards de estatísticas
+                  _buildStatsCards(),
+                  const SizedBox(height: 32),
+                  
+                  // Seção de disciplinas
+                  _buildDisciplinesSection(),
+                  const SizedBox(height: 32),
+                  
+                  // Ações rápidas
+                  _buildQuickActions(),
+                  const SizedBox(height: 32),
+                  
+                  // Ações adicionais
+                  _buildAdditionalActions(),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Cards de estatísticas
-            _buildStatsCards(),
-            const SizedBox(height: 24),
-            
-            // Seção de disciplinas
-            _buildDisciplinesSection(),
-            const SizedBox(height: 24),
-            
-            // Ações rápidas
-            _buildQuickActions(),
-          ],
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 160,
+      floating: false,
+      pinned: true,
+      backgroundColor: AppTheme.primaryColor,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _currentUser?.name ?? 'Professor',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Bem-vindo, ${(_currentUser?.name ?? 'Professor').split(' ').first}',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _signOut,
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.logout,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildStatsCards() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _buildStatCard(
-            title: 'Disciplinas',
-            value: _disciplines.length.toString(),
-            icon: Icons.school,
-            color: const Color(0xFF00A5B5),
+        const Text(
+          'Visão Geral',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard(
-            title: 'Alunos',
-            value: _totalStudents.toString(),
-            icon: Icons.people,
-            color: const Color(0xFFEB2E54),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard(
-            title: 'Mensagens',
-            value: _unreadMessages.toString(),
-            icon: Icons.message,
-            color: const Color(0xFFFFB21C),
-          ),
+        const SizedBox(height: 16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // Para telas pequenas (mobile), usar layout vertical
+            if (constraints.maxWidth < 600) {
+              return Column(
+                children: [
+                  _buildModernStatCard(
+                    title: 'Disciplinas',
+                    value: _disciplines.length.toString(),
+                    icon: Icons.school,
+                    gradient: AppTheme.primaryGradient,
+                    subtitle: 'Ativas',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildModernStatCard(
+                    title: 'Alunos',
+                    value: _totalStudents.toString(),
+                    icon: Icons.people,
+                    gradient: AppTheme.secondaryGradient,
+                    subtitle: 'Matriculados',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildModernStatCard(
+                    title: 'Mensagens',
+                    value: _unreadMessages.toString(),
+                    icon: Icons.message,
+                    gradient: AppTheme.accentGradient,
+                    subtitle: 'Não lidas',
+                  ),
+                ],
+              );
+            }
+            
+            // Para telas maiores, usar layout horizontal
+            return Row(
+              children: [
+                Expanded(
+                  child: _buildModernStatCard(
+                    title: 'Disciplinas',
+                    value: _disciplines.length.toString(),
+                    icon: Icons.school,
+                    gradient: AppTheme.primaryGradient,
+                    subtitle: 'Ativas',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModernStatCard(
+                    title: 'Alunos',
+                    value: _totalStudents.toString(),
+                    icon: Icons.people,
+                    gradient: AppTheme.secondaryGradient,
+                    subtitle: 'Matriculados',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModernStatCard(
+                    title: 'Mensagens',
+                    value: _unreadMessages.toString(),
+                    icon: Icons.message,
+                    gradient: AppTheme.accentGradient,
+                    subtitle: 'Não lidas',
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildModernStatCard({
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
+    required Gradient gradient,
+    required String subtitle,
   }) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Para mobile, usar altura menor e layout mais compacto
+        final isMobile = constraints.maxWidth < 600;
+        final padding = isMobile ? 12.0 : 16.0;
+        final iconSize = isMobile ? 18.0 : 22.0;
+        final valueFontSize = isMobile ? 20.0 : 24.0;
+        final titleFontSize = isMobile ? 12.0 : 14.0;
+        final subtitleFontSize = isMobile ? 10.0 : 12.0;
+        
+        return Container(
+          constraints: BoxConstraints(
+            minHeight: isMobile ? 80.0 : 100.0,
+            maxHeight: isMobile ? 90.0 : 110.0,
+          ),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
               ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(isMobile ? 4 : 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: iconSize,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: valueFontSize,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: subtitleFontSize,
+                        color: Colors.white.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -219,95 +440,201 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             const Text(
               'Minhas Disciplinas',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFEB2E54),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
               ),
             ),
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const DisciplinesScreen(),
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const DisciplinesScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.add, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Nova',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Nova Disciplina'),
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 16),
         if (_disciplines.isEmpty)
-          const Card(
+          AppCard(
             child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.school, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      'Nenhuma disciplina cadastrada',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      shape: BoxShape.circle,
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Crie sua primeira disciplina para começar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
+                    child: Icon(
+                      Icons.school,
+                      size: 40,
+                      color: Colors.grey.shade400,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Nenhuma disciplina cadastrada',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Crie sua primeira disciplina para começar a gerenciar suas turmas',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
               ),
             ),
           )
         else
-          ..._disciplines.take(3).map((discipline) => _buildDisciplineCard(discipline)),
+          ..._disciplines.take(3).map((discipline) => _buildModernDisciplineCard(discipline)),
         if (_disciplines.length > 3)
           Center(
-            child: TextButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const DisciplinesScreen(),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DisciplinesScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Ver todas as disciplinas'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
-                );
-              },
-              child: const Text('Ver todas as disciplinas'),
+                ),
+              ),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildDisciplineCard(DisciplineModel discipline) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: const CircleAvatar(
-          backgroundColor: Color(0xFF00A5B5),
-          child: Icon(Icons.school, color: Colors.white),
-        ),
-        title: Text(
-          discipline.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(discipline.code),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: () {
-          // Navegar para detalhes da disciplina
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => DisciplinesScreen(selectedDiscipline: discipline),
+  Widget _buildModernDisciplineCard(DisciplineModel discipline) {
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 16),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DisciplinesScreen(selectedDiscipline: discipline),
+          ),
+        );
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(16),
             ),
-          );
-        },
+            child: const Icon(
+              Icons.school,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  discipline.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  discipline.code,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.successColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Ativa',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.successColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.arrow_forward_ios,
+              color: AppTheme.textSecondary,
+              size: 16,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -319,19 +646,20 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         const Text(
           'Ações Rápidas',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFEB2E54),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: _buildActionCard(
+              child: _buildModernActionCard(
                 title: 'Gerenciar Alunos',
+                subtitle: 'Matricular e gerenciar',
                 icon: Icons.people,
-                color: const Color(0xFF00A5B5),
+                gradient: AppTheme.primaryGradient,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -343,10 +671,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildActionCard(
+              child: _buildModernActionCard(
                 title: 'Mensagens',
+                subtitle: 'Comunicar com alunos',
                 icon: Icons.message,
-                color: const Color(0xFFFFB21C),
+                gradient: AppTheme.accentGradient,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -362,35 +691,166 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildActionCard({
+  Widget _buildModernActionCard({
     required String title,
+    required String subtitle,
     required IconData icon,
-    required Color color,
+    required Gradient gradient,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(icon, size: 32, color: color),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 24,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-            ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildAdditionalActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Mais Ações',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildAdditionalActionCard(
+                title: 'Atividades',
+                icon: Icons.assignment,
+                color: AppTheme.secondaryColor,
+                onTap: () {
+                  // TODO: Implementar navegação para atividades
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildAdditionalActionCard(
+                title: 'Notas',
+                icon: Icons.grade,
+                color: AppTheme.accentColor,
+                onTap: () {
+                  // TODO: Implementar navegação para notas
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildAdditionalActionCard(
+                title: 'Materiais',
+                icon: Icons.folder,
+                color: AppTheme.primaryColor,
+                onTap: () {
+                  // TODO: Implementar navegação para materiais
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdditionalActionCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return AppCard(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              icon,
+              size: 24,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+

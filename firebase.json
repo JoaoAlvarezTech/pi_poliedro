@@ -1,1 +1,29 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"poliedro-pi","appId":"1:214420620755:android:0d47ceeffd208145d19b26","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"poliedro-pi","configurations":{"android":"1:214420620755:android:0d47ceeffd208145d19b26","web":"1:214420620755:web:e6e270f64f610189d19b26"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "poliedro-pi",
+          "appId": "1:214420620755:android:0d47ceeffd208145d19b26",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "poliedro-pi",
+          "configurations": {
+            "android": "1:214420620755:android:0d47ceeffd208145d19b26",
+            "web": "1:214420620755:web:e6e270f64f610189d19b26"
+          }
+        }
+      }
+    }
+  }
+}

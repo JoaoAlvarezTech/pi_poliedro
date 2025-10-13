@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
 import '../../models/discipline_model.dart';
-import '../../models/material_model.dart';
 import 'materials_screen.dart';
 import 'grades_screen.dart';
 

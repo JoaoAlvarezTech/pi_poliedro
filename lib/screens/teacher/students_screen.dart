@@ -322,7 +322,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ),
             const SizedBox(height: 8),
             // Lista de alunos para seleção
-            Container(
+            SizedBox(
               height: 200,
               child: _allStudents.isEmpty
                   ? const Center(

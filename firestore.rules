@@ -69,8 +69,8 @@ service cloud.firestore {
       // Professores podem criar mensagens para alunos de suas disciplinas
       allow create: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
-        exists(/databases/$(database)/documents/student_disciplines/$(resource.data.receiverId + '_' + get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.id)) &&
-        get(/databases/$(database)/documents/disciplines/$(get(/databases/$(database)/documents/student_disciplines/$(resource.data.receiverId + '_' + get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.id)).data.disciplineId).data.teacherId == request.auth.uid;
+        exists(/databases/$(database)/documents/student_disciplines/$(request.resource.data.receiverId + '_' + request.resource.data.disciplineId)) &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
       
       // Alunos podem ler apenas suas próprias mensagens
       allow read: if request.auth != null && 
