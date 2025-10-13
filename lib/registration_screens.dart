@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'services/auth_service.dart';
+import 'services/firestore_service.dart';
 
 // Tela de seleção do tipo de cadastro
 class RegistrationTypeScreen extends StatelessWidget {
@@ -201,6 +203,8 @@ class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
   final TextEditingController confirmPasswordController = TextEditingController();
   final TextEditingController studentIdController = TextEditingController();
   
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
   bool isLoading = false;
   bool isRegistered = false;
 
@@ -231,13 +235,52 @@ class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
       isLoading = true;
     });
 
-    // Simular cadastro
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Criar usuário no Firebase Auth
+      final userCredential = await _authService.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
 
-    setState(() {
-      isLoading = false;
-      isRegistered = true;
-    });
+      if (userCredential?.user != null) {
+        // Salvar dados do usuário no Firestore
+        await _firestoreService.createUser(
+          uid: userCredential!.user!.uid,
+          email: emailController.text.trim(),
+          name: nameController.text.trim(),
+          userType: 'student',
+          cpf: cpfController.text.trim(),
+          phone: phoneController.text.trim(),
+          ra: studentIdController.text.trim(),
+        );
+
+        setState(() {
+          isLoading = false;
+          isRegistered = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showErrorDialog(e.toString());
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erro'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -554,6 +597,8 @@ class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
   
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
   bool isLoading = false;
   bool isRegistered = false;
 
@@ -583,13 +628,51 @@ class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
       isLoading = true;
     });
 
-    // Simular cadastro
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Criar usuário no Firebase Auth
+      final userCredential = await _authService.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
 
-    setState(() {
-      isLoading = false;
-      isRegistered = true;
-    });
+      if (userCredential?.user != null) {
+        // Salvar dados do usuário no Firestore
+        await _firestoreService.createUser(
+          uid: userCredential!.user!.uid,
+          email: emailController.text.trim(),
+          name: nameController.text.trim(),
+          userType: 'teacher',
+          cpf: cpfController.text.trim(),
+          phone: phoneController.text.trim(),
+        );
+
+        setState(() {
+          isLoading = false;
+          isRegistered = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showErrorDialog(e.toString());
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erro'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

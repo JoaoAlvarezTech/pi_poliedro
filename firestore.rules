@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras para usuários
+    match /users/{userId} {
+      // Usuários podem ler e escrever apenas seus próprios dados
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Professores podem ler dados de alunos para matricular em disciplinas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+    }
+    
+    // Regras para disciplinas
+    match /disciplines/{disciplineId} {
+      // Apenas o professor proprietário pode criar, editar e deletar suas disciplinas
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        resource.data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler disciplinas em que estão matriculados
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        exists(/databases/$(database)/documents/student_disciplines/$(request.auth.uid + '_' + disciplineId));
+    }
+    
+    // Regras para atividades
+    match /activities/{activityId} {
+      // Apenas o professor da disciplina pode criar, editar e deletar atividades
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler atividades das disciplinas em que estão matriculados
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        exists(/databases/$(database)/documents/student_disciplines/$(request.auth.uid + '_' + resource.data.disciplineId));
+    }
+    
+    // Regras para notas
+    match /grades/{gradeId} {
+      // Professores podem criar e editar notas de suas disciplinas
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler apenas suas próprias notas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.studentId == request.auth.uid;
+    }
+    
+    // Regras para materiais
+    match /materials/{materialId} {
+      // Apenas o professor da disciplina pode criar, editar e deletar materiais
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler materiais das disciplinas em que estão matriculados
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        exists(/databases/$(database)/documents/student_disciplines/$(request.auth.uid + '_' + resource.data.disciplineId));
+    }
+    
+    // Regras para mensagens
+    match /messages/{messageId} {
+      // Professores podem criar mensagens para alunos de suas disciplinas
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        exists(/databases/$(database)/documents/student_disciplines/$(resource.data.receiverId + '_' + get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.id)) &&
+        get(/databases/$(database)/documents/disciplines/$(get(/databases/$(database)/documents/student_disciplines/$(resource.data.receiverId + '_' + get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.id)).data.disciplineId).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler apenas suas próprias mensagens
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.receiverId == request.auth.uid;
+      
+      // Alunos podem marcar suas mensagens como lidas
+      allow update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.receiverId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+    }
+    
+    // Regras para matrículas de alunos em disciplinas
+    match /student_disciplines/{enrollmentId} {
+      // Professores podem criar e editar matrículas de suas disciplinas
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler suas próprias matrículas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.studentId == request.auth.uid;
+    }
+  }
+}

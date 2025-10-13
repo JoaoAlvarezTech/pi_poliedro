@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'registration_screens.dart';
+import 'services/auth_service.dart';
+import 'screens/teacher/teacher_dashboard.dart';
+import 'screens/student/student_dashboard.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const PortalPoliedroApp());
 }
 
@@ -18,6 +27,11 @@ class PortalPoliedroApp extends StatelessWidget {
         useMaterial3: false,
       ),
       home: const LoginScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/teacher': (context) => const TeacherDashboard(),
+        '/student': (context) => const StudentDashboard(),
+      },
     );
   }
 }
@@ -32,15 +46,70 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   Canal canalSelecionado = Canal.aluno;
+  bool isLoading = false;
 
   @override
   void dispose() {
-    usernameController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      _showErrorDialog('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await _authService.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+      
+          // Login bem-sucedido - navegar para a tela principal
+          if (mounted) {
+            if (canalSelecionado == Canal.aluno) {
+              Navigator.of(context).pushNamedAndRemoveUntil('/student', (route) => false);
+            } else {
+              Navigator.of(context).pushNamedAndRemoveUntil('/teacher', (route) => false);
+            }
+          }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erro'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -107,9 +176,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     _Input(
-                      controller: usernameController,
-                      hintText: 'Usuário',
-                      icon: Icons.person_outline,
+                      controller: emailController,
+                      hintText: 'E-mail',
+                      icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16),
                     _Input(
@@ -146,18 +215,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(24),
                           ),
                         ),
-                        onPressed: () {
-                          final canal = isAluno ? 'Aluno' : 'Professor';
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => PlaceholderHome(title: 'Bem-vindo, $canal'),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Entrar',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                        ),
+                        onPressed: isLoading ? null : _signIn,
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Entrar',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -203,8 +274,8 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: const [
+    return const Column(
+      children: [
         Icon(Icons.view_in_ar_outlined, size: 72, color: Color(0xFF00A5B5)),
         SizedBox(height: 8),
         Text(
@@ -286,6 +357,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
   bool isLoading = false;
   bool emailSent = false;
 
@@ -306,13 +378,34 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       isLoading = true;
     });
 
-    // Simular envio de email
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      await _authService.sendPasswordResetEmail(emailController.text.trim());
+      setState(() {
+        isLoading = false;
+        emailSent = true;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showErrorDialog(e.toString());
+    }
+  }
 
-    setState(() {
-      isLoading = false;
-      emailSent = true;
-    });
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erro'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
