@@ -80,6 +80,54 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     );
   }
 
+  void _showUnenrollDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Desmatricular Aluno'),
+        content: Text(
+          'Tem certeza que deseja desmatricular ${widget.student.studentName} da disciplina ${widget.discipline.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _unenrollStudent();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Desmatricular'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _unenrollStudent() async {
+    try {
+      await _firestoreService.unenrollStudentFromDiscipline(
+        widget.student.studentId,
+        widget.discipline.id,
+      );
+      
+      // Voltar para a tela anterior após desmatricular
+      Navigator.of(context).pop();
+      
+      // Mostrar mensagem de sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${widget.student.studentName} foi desmatriculado com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      _showErrorDialog('Erro ao desmatricular aluno: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,6 +137,11 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         foregroundColor: Colors.white,
         title: Text(widget.student.studentName),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_remove),
+            tooltip: 'Desmatricular',
+            onPressed: () => _showUnenrollDialog(),
+          ),
           IconButton(
             icon: const Icon(Icons.message),
             onPressed: () {

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
 import '../../models/discipline_model.dart';
+import '../../theme/app_theme.dart';
 import 'discipline_detail_screen.dart';
 
 class DisciplinesScreen extends StatefulWidget {
   final DisciplineModel? selectedDiscipline;
+  final bool showCreateForm;
   
-  const DisciplinesScreen({super.key, this.selectedDiscipline});
+  const DisciplinesScreen({super.key, this.selectedDiscipline, this.showCreateForm = false});
 
   @override
   State<DisciplinesScreen> createState() => _DisciplinesScreenState();
@@ -28,6 +30,7 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
   @override
   void initState() {
     super.initState();
+    _showCreateForm = widget.showCreateForm;
     _loadDisciplines();
   }
 
@@ -131,10 +134,11 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text('Minhas Disciplinas'),
         actions: [
           IconButton(
@@ -159,94 +163,89 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
   }
 
   Widget _buildCreateForm() {
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nova Disciplina',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFEB2E54),
-                ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Nova Disciplina',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryColor,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome da Disciplina',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, digite o nome da disciplina';
-                  }
-                  return null;
-                },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nome da Disciplina',
+                prefixIcon: Icon(Icons.school),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _codeController,
-                decoration: const InputDecoration(
-                  labelText: 'Código da Disciplina',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, digite o código da disciplina';
-                  }
-                  return null;
-                },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor, digite o nome da disciplina';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _codeController,
+              decoration: const InputDecoration(
+                labelText: 'Código da Disciplina',
+                prefixIcon: Icon(Icons.tag),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descrição',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, digite uma descrição';
-                  }
-                  return null;
-                },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor, digite o código da disciplina';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Descrição',
+                prefixIcon: Icon(Icons.description),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _createDiscipline,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A5B5),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Criar Disciplina'),
-                    ),
+              maxLines: 3,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor, digite uma descrição';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Criar Disciplina',
+                    onPressed: _createDiscipline,
+                    backgroundColor: AppTheme.primaryColor,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showCreateForm = false;
-                        });
-                      },
-                      child: const Text('Cancelar'),
-                    ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: AppButton(
+                    text: 'Cancelar',
+                    onPressed: () {
+                      setState(() {
+                        _showCreateForm = false;
+                      });
+                    },
+                    backgroundColor: Colors.grey.shade400,
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -285,36 +284,66 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
       itemCount: _disciplines.length,
       itemBuilder: (context, index) {
         final discipline = _disciplines[index];
-        return Card(
+        return AppCard(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Color(0xFF00A5B5),
-              child: Icon(Icons.school, color: Colors.white),
-            ),
-            title: Text(
-              discipline.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Código: ${discipline.code}'),
-                Text(
-                  discipline.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => DisciplineDetailScreen(discipline: discipline),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => DisciplineDetailScreen(discipline: discipline),
+                child: const Icon(Icons.school, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      discipline.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Código: ${discipline.code}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      discipline.description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              );
-            },
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: AppTheme.textSecondary,
+                size: 16,
+              ),
+            ],
           ),
         );
       },

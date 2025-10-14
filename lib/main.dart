@@ -171,9 +171,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFF7DDB8),
-              Color(0xFFE8C4A0),
-              Color(0xFFD4A574),
+              Color(0xFFF2F2F2),
+              Color(0xFFF2F2F2),
+              Color(0xFFF2F2F2),
             ],
           ),
         ),
@@ -249,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFFEB2E54),
+                color: Color(0xFFF2275D),
                 letterSpacing: 1.2,
               ),
             ),
@@ -331,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 child: const Text(
                   'Esqueceu a senha?',
                   style: TextStyle(
-                    color: Color(0xFF00A5B5),
+                    color: Color(0xFF21BFBF),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -345,7 +345,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               text: 'Entrar',
               onPressed: isLoading ? null : _signIn,
               isLoading: isLoading,
-              backgroundColor: const Color(0xFF00A5B5),
+              backgroundColor: const Color(0xFF21BFBF),
               height: 52,
             ),
             
@@ -373,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                   child: const Text(
                     'Cadastre-se',
                     style: TextStyle(
-                      color: Color(0xFF00A5B5),
+                      color: Color(0xFF21BFBF),
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -394,7 +394,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 label: const Text(
                   'Entrar como Professor',
                   style: TextStyle(
-                    color: Color(0xFFFFB21C),
+                    color: Color(0xFFF29422),
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -413,7 +413,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF00A5B5) : Colors.transparent,
+          color: isSelected ? const Color(0xFF21BFBF) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -468,7 +468,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ),
           prefixIcon: Icon(
             icon,
-            color: const Color(0xFF00A5B5),
+            color: const Color(0xFF21BFBF),
             size: 22,
           ),
           border: InputBorder.none,
@@ -546,19 +546,11 @@ class _AnimatedLogoState extends State<_AnimatedLogo> with TickerProviderStateMi
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF00A5B5),
-                        Color(0xFF0891B2),
-                        Color(0xFF0E7490),
-                      ],
-                    ),
+                    color: const Color(0xFFF2275D),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF00A5B5).withOpacity(0.3),
+                        color: const Color(0xFFF2275D).withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -588,9 +580,7 @@ class _AnimatedLogoState extends State<_AnimatedLogo> with TickerProviderStateMi
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFEB2E54), Color(0xFFE53E3E)],
-            ),
+            color: const Color(0xFFF2275D),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Text(
@@ -694,9 +684,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFF7DDB8),
-              Color(0xFFE8C4A0),
-              Color(0xFFD4A574),
+              Color(0xFFF2F2F2),
+              Color(0xFFF2F2F2),
+              Color(0xFFF2F2F2),
             ],
           ),
         ),
@@ -743,13 +733,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF00A5B5), Color(0xFF0891B2)],
-              ),
+              color: const Color(0xFF21BFBF),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF00A5B5).withOpacity(0.3),
+                  color: const Color(0xFF21BFBF).withOpacity(0.3),
                   blurRadius: 15,
                   spreadRadius: 3,
                 ),
@@ -810,7 +798,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 prefixIcon: const Icon(
                   Icons.email_outlined,
-                  color: Color(0xFF00A5B5),
+                  color: Color(0xFF21BFBF),
                   size: 22,
                 ),
                 border: InputBorder.none,
@@ -847,7 +835,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: const Text(
               'Voltar ao Login',
               style: TextStyle(
-                color: Color(0xFF00A5B5),
+                color: Color(0xFF21BFBF),
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
               ),
@@ -867,13 +855,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF38A169), Color(0xFF2F855A)],
-            ),
+            color: const Color(0xFF21BFBF),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF38A169).withOpacity(0.3),
+                color: const Color(0xFF21BFBF).withOpacity(0.3),
                 blurRadius: 15,
                 spreadRadius: 3,
               ),
@@ -923,7 +909,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF00A5B5),
+                  color: Color(0xFF21BFBF),
             ),
           ),
         ),
@@ -963,7 +949,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: const Text(
             'Enviar para outro e-mail',
             style: TextStyle(
-              color: Color(0xFF00A5B5),
+                  color: Color(0xFF21BFBF),
               fontWeight: FontWeight.w600,
               fontSize: 16,
             ),

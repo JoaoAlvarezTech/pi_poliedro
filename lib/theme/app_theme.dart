@@ -1,38 +1,51 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Cores principais
-  static const Color primaryColor = Color(0xFF00A5B5);
-  static const Color secondaryColor = Color(0xFFEB2E54);
-  static const Color accentColor = Color(0xFFFFB21C);
-  static const Color backgroundColor = Color(0xFFF7DDB8);
+  // Nova paleta de cores - Vibrante e moderna
+  static const Color primaryColor = Color(0xFFF2275D); // Rosa vibrante
+  static const Color secondaryColor = Color(0xFFF226E); // Rosa quente
+  static const Color accentColor = Color(0xFF21BFBF); // Turquesa brilhante
+  static const Color backgroundColor = Color(0xFFF2F2F2); // Cinza claro
   static const Color surfaceColor = Colors.white;
-  static const Color errorColor = Color(0xFFE53E3E);
-  static const Color successColor = Color(0xFF38A169);
-  static const Color warningColor = Color(0xFFED8936);
+  static const Color errorColor = Color(0xFFF2275D); // Rosa para erros
+  static const Color successColor = Color(0xFF21BFBF); // Turquesa para sucesso
+  static const Color warningColor = Color(0xFFF29422); // Laranja para avisos
+  static const Color infoColor = Color(0xFF21BFBF); // Turquesa para info
   
   // Cores de texto
-  static const Color textPrimary = Color(0xFF2D3748);
-  static const Color textSecondary = Color(0xFF718096);
-  static const Color textLight = Color(0xFFA0AEC0);
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textLight = Color(0xFF94A3B8);
   
-  // Gradientes
+  // Gradientes simples e limpos
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF00A5B5), Color(0xFF0891B2)],
+    colors: [Color(0xFFF2275D), Color(0xFFF2275D)],
   );
   
   static const LinearGradient secondaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFEB2E54), Color(0xFFE53E3E)],
+    colors: [Color(0xFF21BFBF), Color(0xFF21BFBF)],
   );
   
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFFB21C), Color(0xFFED8936)],
+    colors: [Color(0xFFF29422), Color(0xFFF29422)],
+  );
+  
+  static const LinearGradient successGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF21BFBF), Color(0xFF21BFBF)],
+  );
+  
+  static const LinearGradient warningGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF29422), Color(0xFFF29422)],
   );
 
   // Tema principal
@@ -72,12 +85,13 @@ class AppTheme {
       
       // Cards
       cardTheme: CardThemeData(
-        elevation: 2,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
         color: surfaceColor,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withOpacity(0.05),
+        surfaceTintColor: Colors.transparent,
       ),
       
       // Botões elevados
@@ -85,12 +99,12 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          elevation: 2,
-          shadowColor: primaryColor.withOpacity(0.3),
+          elevation: 0,
+          shadowColor: primaryColor.withOpacity(0.2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -114,22 +128,22 @@ class AppTheme {
         filled: true,
         fillColor: surfaceColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade200),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade200),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: errorColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         hintStyle: TextStyle(color: textLight),
       ),
       
@@ -229,19 +243,28 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: elevation ?? 2,
+    return Container(
       margin: margin,
-      color: color,
-      shape: RoundedRectangleBorder(
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+      decoration: BoxDecoration(
+        color: color ?? AppTheme.surfaceColor,
+        borderRadius: borderRadius ?? BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(16),
-          child: child,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: borderRadius ?? BorderRadius.circular(20),
+          child: Padding(
+            padding: padding ?? const EdgeInsets.all(20),
+            child: child,
+          ),
         ),
       ),
     );
@@ -280,10 +303,10 @@ class AppButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor ?? AppTheme.primaryColor,
           foregroundColor: foregroundColor ?? Colors.white,
-          elevation: 2,
-          shadowColor: (backgroundColor ?? AppTheme.primaryColor).withOpacity(0.3),
+          elevation: 0,
+          shadowColor: (backgroundColor ?? AppTheme.primaryColor).withOpacity(0.2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
         child: isLoading
@@ -342,11 +365,11 @@ class GradientCard extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -355,9 +378,9 @@ class GradientCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: borderRadius ?? BorderRadius.circular(16),
+          borderRadius: borderRadius ?? BorderRadius.circular(20),
           child: Padding(
-            padding: padding ?? const EdgeInsets.all(16),
+            padding: padding ?? const EdgeInsets.all(20),
             child: child,
           ),
         ),

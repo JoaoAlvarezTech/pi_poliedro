@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
@@ -37,6 +39,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   String _selectedType = 'link';
   String? _selectedFile;
   String? _fileName;
+  Uint8List? _selectedFileBytes;
 
   @override
   void initState() {
@@ -76,8 +79,16 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
       if (result != null) {
         setState(() {
-          _selectedFile = result.files.single.path;
           _fileName = result.files.single.name;
+          if (kIsWeb) {
+            // Para web, usar bytes
+            _selectedFileBytes = result.files.single.bytes;
+            _selectedFile = null;
+          } else {
+            // Para mobile/desktop, usar path
+            _selectedFile = result.files.single.path;
+            _selectedFileBytes = null;
+          }
         });
       }
     } catch (e) {
@@ -86,7 +97,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   }
 
   Future<String> _uploadFile() async {
-    if (_selectedFile == null) throw Exception('Nenhum arquivo selecionado');
+    if (_selectedFile == null && _selectedFileBytes == null) {
+      throw Exception('Nenhum arquivo selecionado');
+    }
 
     try {
       setState(() {
@@ -96,8 +109,19 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_$_fileName';
       final ref = _storage.ref().child('materials/${widget.discipline.id}/$fileName');
       
-      final uploadTask = await ref.putFile(File(_selectedFile!));
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      UploadTask uploadTask;
+      if (kIsWeb && _selectedFileBytes != null) {
+        // Para web, usar bytes
+        uploadTask = ref.putData(_selectedFileBytes!);
+      } else if (_selectedFile != null) {
+        // Para mobile/desktop, usar File
+        uploadTask = ref.putFile(File(_selectedFile!));
+      } else {
+        throw Exception('Arquivo não encontrado');
+      }
+      
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
       
       return downloadUrl;
     } catch (e) {
@@ -117,7 +141,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       int? fileSize;
 
       if (_selectedType == 'pdf' || _selectedType == 'image') {
-        if (_selectedFile == null) {
+        if (_selectedFile == null && _selectedFileBytes == null) {
           _showErrorDialog('Por favor, selecione um arquivo');
           return;
         }
@@ -305,7 +329,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               else
                 Column(
                   children: [
-                    if (_selectedFile != null)
+                    if (_selectedFile != null || _selectedFileBytes != null)
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(

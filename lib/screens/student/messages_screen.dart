@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
-import '../../models/message_model.dart';
+import '../../models/user_model.dart';
+import '../../theme/app_theme.dart';
+import '../chat/conversations_screen.dart';
+import '../chat/chat_screen.dart';
 
 class StudentMessagesScreen extends StatefulWidget {
   const StudentMessagesScreen({super.key});
@@ -12,49 +15,50 @@ class StudentMessagesScreen extends StatefulWidget {
 
 class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   
-  List<MessageModel> _messages = [];
+  UserModel? _currentUser;
+  List<UserModel> _conversations = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
+    _loadConversations();
   }
 
-  Future<void> _loadMessages() async {
+  Future<void> _loadConversations() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final messages = await _firestoreService.getStudentMessages(user.uid);
-        setState(() {
-          _messages = messages;
-          _isLoading = false;
-        });
+      final user = _auth.currentUser;
+      if (user == null) {
+        _showErrorDialog('Usuário não autenticado.');
+        return;
       }
+
+      final userData = await _firestoreService.getUser(user.uid);
+      if (userData != null) {
+        _currentUser = UserModel.fromMap(userData);
+      } else {
+        _showErrorDialog('Dados do usuário atual não encontrados.');
+        return;
+      }
+
+      final conversations = await _firestoreService.getUserConversations(user.uid);
+      setState(() {
+        _conversations = conversations;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      _showErrorDialog('Erro ao carregar mensagens: $e');
+      _showErrorDialog('Erro ao carregar conversas: $e');
     }
   }
 
-  Future<void> _markAsRead(MessageModel message) async {
-    if (!message.isRead) {
-      try {
-        await _firestoreService.markMessageAsRead(message.id);
-        setState(() {
-          final index = _messages.indexWhere((m) => m.id == message.id);
-          if (index != -1) {
-            _messages[index] = message.copyWith(isRead: true, readAt: DateTime.now());
-          }
-        });
-      } catch (e) {
-        _showErrorDialog('Erro ao marcar mensagem como lida: $e');
-      }
-    }
-  }
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -75,39 +79,65 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text('Mensagens'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ConversationsScreen(),
+                ),
+              );
+            },
+            child: const Text(
+              'Ver todas',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildMessagesList(),
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+            )
+          : _buildConversationsList(),
     );
   }
 
-  Widget _buildMessagesList() {
-    if (_messages.isEmpty) {
-      return const Center(
+  Widget _buildConversationsList() {
+    if (_conversations.isEmpty) {
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.message, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            Icon(
+              Icons.chat_bubble_outline,
+              size: 80,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 20),
             Text(
-              'Nenhuma mensagem recebida',
+              'Nenhuma conversa encontrada',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'As mensagens do professor aparecerão aqui',
+              'Suas conversas com professores aparecerão aqui.',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: Colors.grey.shade500,
               ),
             ),
           ],
@@ -117,88 +147,96 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _messages.length,
+      itemCount: _conversations.length,
       itemBuilder: (context, index) {
-        final message = _messages[index];
-        return Card(
+        final otherUser = _conversations[index];
+        return AppCard(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: message.isRead ? Colors.grey : const Color(0xFFEB2E54),
-              child: Icon(
-                message.isRead ? Icons.message : Icons.message_outlined,
-                color: Colors.white,
-              ),
-            ),
-            title: Text(
-              message.subject,
-              style: TextStyle(
-                fontWeight: message.isRead ? FontWeight.normal : FontWeight.bold,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('De: ${message.senderName}'),
-                Text(
-                  _formatDate(message.createdAt),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+          onTap: () {
+            if (_currentUser != null) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ChatScreen(
+                    otherUser: otherUser,
+                  ),
                 ),
-              ],
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              _showMessageDetail(message);
-              _markAsRead(message);
-            },
+              ).then((_) => _loadConversations()); // Reload on pop
+            }
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: otherUser.userType == 'teacher'
+                    ? AppTheme.secondaryColor
+                    : AppTheme.accentColor,
+                child: Text(
+                  otherUser.name.isNotEmpty
+                      ? otherUser.name[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      otherUser.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: otherUser.userType == 'teacher'
+                                ? AppTheme.primaryColor.withOpacity(0.1)
+                                : AppTheme.accentColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            otherUser.userType == 'teacher' ? 'Professor' : 'Aluno',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: otherUser.userType == 'teacher'
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.accentColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            otherUser.email,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: AppTheme.textSecondary,
+                size: 16,
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  void _showMessageDetail(MessageModel message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(message.subject),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'De: ${message.senderName}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFEB2E54),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Data: ${_formatFullDate(message.createdAt)}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-              Text(message.content),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
-  }
-
-  String _formatFullDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} às ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
 }

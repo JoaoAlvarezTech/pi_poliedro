@@ -5,10 +5,13 @@ import '../../services/firestore_service.dart';
 import '../../models/user_model.dart';
 import '../../models/discipline_model.dart';
 import '../../models/message_model.dart';
+import '../../models/activity_model.dart';
 import '../../theme/app_theme.dart';
 import 'disciplines_screen.dart';
 import 'messages_screen.dart';
-import 'grades_screen.dart';
+import 'student_discipline_detail_screen.dart';
+import 'submission_screen.dart';
+import '../chat/conversations_screen.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -24,7 +27,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
   UserModel? _currentUser;
   List<DisciplineModel> _disciplines = [];
   List<MessageModel> _messages = [];
-  int _unreadMessages = 0;
+  List<ActivityModel> _upcomingActivities = [];
   bool _isLoading = true;
 
   @override
@@ -57,12 +60,26 @@ class _StudentDashboardState extends State<StudentDashboard> {
         
         // Buscar mensagens
         final messages = await _firestoreService.getStudentMessages(user.uid);
-        final unreadCount = messages.where((m) => !m.isRead).length;
+
+        // Buscar próximas atividades
+        List<ActivityModel> upcomingActivities = [];
+        for (var discipline in disciplines) {
+          final activities = await _firestoreService.getDisciplineActivities(discipline.id);
+          // Filtrar atividades com prazo nos próximos 7 dias
+          final now = DateTime.now();
+          final upcoming = activities.where((activity) {
+            final daysUntilDue = activity.dueDate.difference(now).inDays;
+            return daysUntilDue >= 0 && daysUntilDue <= 7;
+          }).toList();
+          upcomingActivities.addAll(upcoming);
+        }
+        // Ordenar por data de vencimento
+        upcomingActivities.sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
         setState(() {
           _disciplines = disciplines;
           _messages = messages;
-          _unreadMessages = unreadCount;
+          _upcomingActivities = upcomingActivities;
           _isLoading = false;
         });
       } else {
@@ -157,12 +174,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cards de estatísticas
-                  _buildStatsCards(),
-                  const SizedBox(height: 32),
-                  
                   // Seção de disciplinas
                   _buildDisciplinesSection(),
+                  const SizedBox(height: 32),
+                  
+                  // Seção de próximas tarefas
+                  _buildUpcomingTasksSection(),
                   const SizedBox(height: 32),
                   
                   // Seção de mensagens
@@ -234,6 +251,27 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     ),
                   ),
                   IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ConversationsScreen(),
+                        ),
+                      );
+                    },
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chat,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  IconButton(
                     onPressed: _signOut,
                     icon: Container(
                       padding: const EdgeInsets.all(8),
@@ -257,168 +295,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  Widget _buildStatsCards() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Meu Progresso',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            // Para telas pequenas (mobile), usar layout vertical
-            if (constraints.maxWidth < 600) {
-              return Column(
-                children: [
-                  _buildModernStatCard(
-                    title: 'Disciplinas',
-                    value: _disciplines.length.toString(),
-                    icon: Icons.school,
-                    gradient: AppTheme.primaryGradient,
-                    subtitle: 'Matriculadas',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernStatCard(
-                    title: 'Mensagens',
-                    value: _unreadMessages.toString(),
-                    icon: Icons.message,
-                    gradient: _unreadMessages > 0 ? AppTheme.secondaryGradient : AppTheme.accentGradient,
-                    subtitle: _unreadMessages > 0 ? 'Não lidas' : 'Todas lidas',
-                  ),
-                ],
-              );
-            }
-            
-            // Para telas maiores, usar layout horizontal
-            return Row(
-              children: [
-                Expanded(
-                  child: _buildModernStatCard(
-                    title: 'Disciplinas',
-                    value: _disciplines.length.toString(),
-                    icon: Icons.school,
-                    gradient: AppTheme.primaryGradient,
-                    subtitle: 'Matriculadas',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildModernStatCard(
-                    title: 'Mensagens',
-                    value: _unreadMessages.toString(),
-                    icon: Icons.message,
-                    gradient: _unreadMessages > 0 ? AppTheme.secondaryGradient : AppTheme.accentGradient,
-                    subtitle: _unreadMessages > 0 ? 'Não lidas' : 'Todas lidas',
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
 
-  Widget _buildModernStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Gradient gradient,
-    required String subtitle,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Para mobile, usar altura menor e layout mais compacto
-        final isMobile = constraints.maxWidth < 600;
-        final padding = isMobile ? 12.0 : 16.0;
-        final iconSize = isMobile ? 18.0 : 22.0;
-        final valueFontSize = isMobile ? 20.0 : 24.0;
-        final titleFontSize = isMobile ? 12.0 : 14.0;
-        final subtitleFontSize = isMobile ? 10.0 : 12.0;
-        
-        return Container(
-          constraints: BoxConstraints(
-            minHeight: isMobile ? 80.0 : 100.0,
-            maxHeight: isMobile ? 90.0 : 110.0,
-          ),
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: gradient.colors.first.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(isMobile ? 4 : 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: iconSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: valueFontSize,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: titleFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: subtitleFontSize,
-                        color: Colors.white.withOpacity(0.8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildDisciplinesSection() {
     return Column(
@@ -509,7 +386,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => StudentGradesScreen(discipline: discipline),
+            builder: (_) => StudentDisciplineDetailScreen(discipline: discipline),
           ),
         );
       },
@@ -759,6 +636,184 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildUpcomingTasksSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Próximas Tarefas',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (_upcomingActivities.isEmpty)
+          AppCard(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.assignment,
+                      size: 40,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Nenhuma tarefa próxima',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Suas próximas atividades aparecerão aqui',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ..._upcomingActivities.take(3).map((activity) {
+            final discipline = _disciplines.firstWhere(
+              (d) => d.id == activity.disciplineId,
+              orElse: () => DisciplineModel(
+                id: '',
+                teacherId: '',
+                name: 'Disciplina não encontrada',
+                code: '',
+                description: '',
+                teacherName: '',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ),
+            );
+            
+            final daysUntilDue = activity.dueDate.difference(DateTime.now()).inDays;
+            final isOverdue = daysUntilDue < 0;
+            final isDueToday = daysUntilDue == 0;
+            final isDueTomorrow = daysUntilDue == 1;
+            
+            String dueText;
+            Color dueColor;
+            if (isOverdue) {
+              dueText = 'Vencida há ${-daysUntilDue} dias';
+              dueColor = AppTheme.errorColor;
+            } else if (isDueToday) {
+              dueText = 'Vence hoje';
+              dueColor = AppTheme.warningColor;
+            } else if (isDueTomorrow) {
+              dueText = 'Vence amanhã';
+              dueColor = AppTheme.warningColor;
+            } else {
+              dueText = 'Vence em $daysUntilDue dias';
+              dueColor = AppTheme.textSecondary;
+            }
+            
+            return AppCard(
+              margin: const EdgeInsets.only(bottom: 12),
+              onTap: () {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SubmissionScreen(
+                        activity: activity,
+                        discipline: discipline,
+                        studentId: user.uid,
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: isOverdue || isDueToday 
+                          ? LinearGradient(
+                              colors: [AppTheme.errorColor, AppTheme.errorColor],
+                            )
+                          : AppTheme.accentGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.assignment, color: Colors.white),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          activity.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          discipline.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: dueColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              dueText,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: dueColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: AppTheme.textSecondary,
+                    size: 16,
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+      ],
     );
   }
 

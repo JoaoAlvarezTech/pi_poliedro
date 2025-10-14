@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
 import '../../models/discipline_model.dart';
 import '../../models/student_discipline_model.dart';
 import '../../models/user_model.dart';
-import '../../models/grade_model.dart';
 import 'student_detail_screen.dart';
 
 class StudentsScreen extends StatefulWidget {
@@ -158,6 +156,48 @@ class _StudentsScreenState extends State<StudentsScreen> {
       _showSuccessDialog('Aluno matriculado com sucesso!');
     } catch (e) {
       _showErrorDialog('Erro ao matricular aluno: $e');
+    }
+  }
+
+  void _showUnenrollDialog(StudentDisciplineModel student) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Desmatricular Aluno'),
+        content: Text(
+          'Tem certeza que deseja desmatricular ${student.studentName} da disciplina ${widget.discipline?.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _unenrollStudent(student);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Desmatricular'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _unenrollStudent(StudentDisciplineModel student) async {
+    if (widget.discipline == null) return;
+
+    try {
+      await _firestoreService.unenrollStudentFromDiscipline(
+        student.studentId,
+        widget.discipline!.id,
+      );
+      
+      _loadData();
+      _showSuccessDialog('Aluno desmatriculado com sucesso!');
+    } catch (e) {
+      _showErrorDialog('Erro ao desmatricular aluno: $e');
     }
   }
 
@@ -468,7 +508,17 @@ class _StudentsScreenState extends State<StudentsScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text('Matriculado em: ${_formatDate(student.enrolledAt)}'),
-            trailing: const Icon(Icons.arrow_forward_ios),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: () => _showUnenrollDialog(student),
+                  icon: const Icon(Icons.person_remove, color: Colors.red),
+                  tooltip: 'Desmatricular',
+                ),
+                const Icon(Icons.arrow_forward_ios),
+              ],
+            ),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(

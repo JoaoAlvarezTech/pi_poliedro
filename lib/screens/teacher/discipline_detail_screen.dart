@@ -4,9 +4,11 @@ import '../../models/discipline_model.dart';
 import '../../models/activity_model.dart';
 import '../../models/material_model.dart';
 import '../../models/student_discipline_model.dart';
+import '../../theme/app_theme.dart';
 import 'activities_screen.dart';
 import 'materials_screen.dart';
 import 'students_screen.dart';
+import 'submissions_screen.dart';
 
 class DisciplineDetailScreen extends StatefulWidget {
   final DisciplineModel discipline;
@@ -79,14 +81,17 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        elevation: 0,
         title: Text(widget.discipline.name),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withOpacity(0.7),
           tabs: const [
             Tab(icon: Icon(Icons.assignment), text: 'Atividades'),
             Tab(icon: Icon(Icons.folder), text: 'Materiais'),
@@ -95,7 +100,11 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+            )
           : TabBarView(
               controller: _tabController,
               children: [
@@ -119,22 +128,25 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                 'Atividades (${_activities.length})',
                 style: const TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFEB2E54),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => ActivitiesScreen(discipline: widget.discipline),
+                      builder: (_) => ActivitiesScreen(
+                        discipline: widget.discipline,
+                        showCreateForm: true,
+                      ),
                     ),
                   );
                 },
                 icon: const Icon(Icons.add),
                 label: const Text('Nova Atividade'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A5B5),
+                  backgroundColor: AppTheme.accentColor,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -164,36 +176,75 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                   itemCount: _activities.length,
                   itemBuilder: (context, index) {
                     final activity = _activities[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFF00A5B5),
-                          child: Icon(Icons.assignment, color: Colors.white),
-                        ),
-                        title: Text(
-                          activity.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Peso: ${(activity.weight * 100).toStringAsFixed(0)}%'),
-                            Text('Nota máxima: ${activity.maxGrade.toStringAsFixed(1)}'),
-                            Text('Prazo: ${_formatDate(activity.dueDate)}'),
-                          ],
-                        ),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ActivitiesScreen(
-                                discipline: widget.discipline,
-                                selectedActivity: activity,
-                              ),
+                    return AppCard(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => SubmissionsScreen(
+                              activity: activity,
+                              discipline: widget.discipline,
                             ),
-                          );
-                        },
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.accentGradient,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.assignment, color: Colors.white),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  activity.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Peso: ${(activity.weight * 100).toStringAsFixed(0)}%',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Nota máxima: ${activity.maxGrade.toStringAsFixed(1)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Prazo: ${_formatDate(activity.dueDate)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: AppTheme.textSecondary,
+                            size: 16,
+                          ),
+                        ],
                       ),
                     );
                   },

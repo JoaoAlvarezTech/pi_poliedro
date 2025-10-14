@@ -10,12 +10,20 @@ service cloud.firestore {
       // Professores podem ler dados de alunos para matricular em disciplinas
       allow read: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      // Usuários podem ler dados básicos de outros usuários para o sistema de chat
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['teacher', 'student'];
     }
     
     // Regras para disciplinas
     match /disciplines/{disciplineId} {
       // Apenas o professor proprietário pode criar, editar e deletar suas disciplinas
-      allow read, write: if request.auth != null && 
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        request.resource.data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
         resource.data.teacherId == request.auth.uid;
       
@@ -28,7 +36,11 @@ service cloud.firestore {
     // Regras para atividades
     match /activities/{activityId} {
       // Apenas o professor da disciplina pode criar, editar e deletar atividades
-      allow read, write: if request.auth != null && 
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
         get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
       
@@ -41,7 +53,11 @@ service cloud.firestore {
     // Regras para notas
     match /grades/{gradeId} {
       // Professores podem criar e editar notas de suas disciplinas
-      allow read, write: if request.auth != null && 
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
         get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
       
@@ -54,7 +70,11 @@ service cloud.firestore {
     // Regras para materiais
     match /materials/{materialId} {
       // Apenas o professor da disciplina pode criar, editar e deletar materiais
-      allow read, write: if request.auth != null && 
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
         get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
       
@@ -87,7 +107,11 @@ service cloud.firestore {
     // Regras para matrículas de alunos em disciplinas
     match /student_disciplines/{enrollmentId} {
       // Professores podem criar e editar matrículas de suas disciplinas
-      allow read, write: if request.auth != null && 
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
         get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
       
@@ -95,6 +119,40 @@ service cloud.firestore {
       allow read: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
         resource.data.studentId == request.auth.uid;
+    }
+    
+    // Regras para submissões de tarefas
+    match /submissions/{submissionId} {
+      // Alunos podem criar e atualizar suas próprias submissões
+      allow create, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        request.resource.data.studentId == request.auth.uid;
+      
+      // Alunos podem ler suas próprias submissões
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.studentId == request.auth.uid;
+      
+      // Professores podem ler e avaliar todas as submissões
+      allow read, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+    }
+    
+    // Regras para mensagens de chat
+    match /chat_messages/{messageId} {
+      // Usuários podem criar mensagens onde são o remetente
+      allow create: if request.auth != null && 
+        request.resource.data.senderId == request.auth.uid;
+      
+      // Usuários podem ler mensagens onde são remetente ou destinatário
+      allow read: if request.auth != null && 
+        (resource.data.senderId == request.auth.uid || 
+         resource.data.receiverId == request.auth.uid);
+      
+      // Usuários podem atualizar mensagens onde são o destinatário (para marcar como lida)
+      allow update: if request.auth != null && 
+        resource.data.receiverId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
     }
   }
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
 import '../../models/discipline_model.dart';
-import 'materials_screen.dart';
-import 'grades_screen.dart';
+import '../../theme/app_theme.dart';
+import 'student_discipline_detail_screen.dart';
 
 class StudentDisciplinesScreen extends StatefulWidget {
   const StudentDisciplinesScreen({super.key});
@@ -61,14 +61,19 @@ class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text('Minhas Disciplinas'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+            )
           : _buildDisciplinesList(),
     );
   }
@@ -106,84 +111,78 @@ class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
       itemCount: _disciplines.length,
       itemBuilder: (context, index) {
         final discipline = _disciplines[index];
-        return Card(
+        return AppCard(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Color(0xFF00A5B5),
-              child: Icon(Icons.school, color: Colors.white),
-            ),
-            title: Text(
-              discipline.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Código: ${discipline.code}'),
-                Text('Prof. ${discipline.teacherName}'),
-                Text(discipline.description),
-              ],
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              _showDisciplineOptions(discipline);
-            },
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => StudentDisciplineDetailScreen(discipline: discipline),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.school, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      discipline.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Código: ${discipline.code}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Prof. ${discipline.teacherName}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      discipline.description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: AppTheme.textSecondary,
+                size: 16,
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  void _showDisciplineOptions(DisciplineModel discipline) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              discipline.name,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFEB2E54),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.assignment, color: Color(0xFF00A5B5)),
-              title: const Text('Ver Notas'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => StudentGradesScreen(discipline: discipline),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.folder, color: Color(0xFF00A5B5)),
-              title: const Text('Ver Materiais'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => StudentMaterialsScreen(discipline: discipline),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fechar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

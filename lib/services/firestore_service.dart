@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '../models/user_model.dart';
 import '../models/discipline_model.dart';
 import '../models/activity_model.dart';
@@ -6,6 +7,8 @@ import '../models/grade_model.dart';
 import '../models/material_model.dart';
 import '../models/message_model.dart';
 import '../models/student_discipline_model.dart';
+import '../models/submission_model.dart';
+import '../models/chat_message_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -18,6 +21,8 @@ class FirestoreService {
   static const String materialsCollection = 'materials';
   static const String messagesCollection = 'messages';
   static const String studentDisciplinesCollection = 'student_disciplines';
+  static const String submissionsCollection = 'submissions';
+  static const String chatMessagesCollection = 'chat_messages';
 
   // ========== USUÁRIOS ==========
 
@@ -59,6 +64,9 @@ class FirestoreService {
   // Buscar usuário por ID
   Future<Map<String, dynamic>?> getUser(String uid) async {
     try {
+      if (uid.isEmpty) {
+        throw 'ID do usuário não pode ser vazio';
+      }
       DocumentSnapshot doc = await _firestore.collection(usersCollection).doc(uid).get();
       if (doc.exists) {
         return doc.data() as Map<String, dynamic>;
@@ -379,7 +387,7 @@ class FirestoreService {
         }
       }
       
-      return totalWeight > 0 ? (totalWeightedGrade / totalWeight) * 100 : 0.0;
+      return totalWeight > 0 ? (totalWeightedGrade / totalWeight) * 10 : 0.0;
     } catch (e) {
       throw 'Erro ao calcular média do aluno: $e';
     }
@@ -507,6 +515,38 @@ class FirestoreService {
     }
   }
 
+  // Desmatricular aluno de disciplina
+  Future<void> unenrollStudentFromDiscipline(String studentId, String disciplineId) async {
+    try {
+      print('DEBUG - Desmatriculando aluno: $studentId da disciplina: $disciplineId');
+      
+      // Buscar a matrícula específica
+      QuerySnapshot query = await _firestore
+          .collection(studentDisciplinesCollection)
+          .where('studentId', isEqualTo: studentId)
+          .where('disciplineId', isEqualTo: disciplineId)
+          .where('isActive', isEqualTo: true)
+          .get();
+      
+      if (query.docs.isEmpty) {
+        throw 'Matrícula não encontrada';
+      }
+      
+      // Marcar como inativa em vez de deletar (para manter histórico)
+      for (var doc in query.docs) {
+        await doc.reference.update({
+          'isActive': false,
+          'unenrolledAt': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      print('DEBUG - Desmatrícula realizada com sucesso');
+    } catch (e) {
+      print('DEBUG - Erro na desmatrícula: $e');
+      throw 'Erro ao desmatricular aluno: $e';
+    }
+  }
+
   // Buscar alunos de uma disciplina
   Future<List<StudentDisciplineModel>> getDisciplineStudents(String disciplineId) async {
     try {
@@ -564,6 +604,391 @@ class FirestoreService {
       }).toList();
     } catch (e) {
       throw 'Erro ao buscar documentos com paginação: $e';
+    }
+  }
+
+  // ========== SUBMISSÕES ==========
+
+  // Criar submissão
+  Future<String> createSubmission(SubmissionModel submission) async {
+    try {
+      print('DEBUG - Criando submissão para atividade: ${submission.activityId}');
+      print('DEBUG - StudentId: ${submission.studentId}');
+      print('DEBUG - FileUrl: ${submission.fileUrl}');
+      
+      final submissionData = submission.toMap();
+      print('DEBUG - Dados da submissão: $submissionData');
+      
+      DocumentReference docRef = await _firestore
+          .collection(submissionsCollection)
+          .add(submissionData);
+      
+      print('DEBUG - Submissão criada com ID: ${docRef.id}');
+      return docRef.id;
+    } catch (e) {
+      print('DEBUG - Erro ao criar submissão: $e');
+      throw 'Erro ao criar submissão: $e';
+    }
+  }
+
+  // Buscar submissões de uma atividade
+  Future<List<SubmissionModel>> getActivitySubmissions(String activityId) async {
+    try {
+      QuerySnapshot query = await _firestore
+          .collection(submissionsCollection)
+          .where('activityId', isEqualTo: activityId)
+          .orderBy('submittedAt', descending: true)
+          .get();
+
+      return query.docs.map((doc) => 
+          SubmissionModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (e) {
+      throw 'Erro ao buscar submissões da atividade: $e';
+    }
+  }
+
+  // Buscar submissões de um aluno
+  Future<List<SubmissionModel>> getStudentSubmissions(String studentId) async {
+    try {
+      QuerySnapshot query = await _firestore
+          .collection(submissionsCollection)
+          .where('studentId', isEqualTo: studentId)
+          .orderBy('submittedAt', descending: true)
+          .get();
+
+      return query.docs.map((doc) => 
+          SubmissionModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (e) {
+      throw 'Erro ao buscar submissões do aluno: $e';
+    }
+  }
+
+  // Buscar submissão específica de um aluno para uma atividade
+  Future<SubmissionModel?> getStudentActivitySubmission(String studentId, String activityId) async {
+    try {
+      print('DEBUG - Buscando submissão para studentId: $studentId, activityId: $activityId');
+      
+      QuerySnapshot query = await _firestore
+          .collection(submissionsCollection)
+          .where('studentId', isEqualTo: studentId)
+          .where('activityId', isEqualTo: activityId)
+          .limit(1)
+          .get();
+
+      print('DEBUG - Query executada, documentos encontrados: ${query.docs.length}');
+
+      if (query.docs.isEmpty) {
+        print('DEBUG - Nenhuma submissão encontrada');
+        return null;
+      }
+
+      final doc = query.docs.first;
+      final data = doc.data() as Map<String, dynamic>;
+      print('DEBUG - Dados da submissão encontrada: $data');
+      
+      return SubmissionModel.fromMap(data, doc.id);
+    } catch (e) {
+      print('DEBUG - Erro ao buscar submissão: $e');
+      throw 'Erro ao buscar submissão do aluno: $e';
+    }
+  }
+
+  // Avaliar submissão
+  Future<void> gradeSubmission(String submissionId, double grade, String? teacherComments) async {
+    try {
+      print('DEBUG - Avaliando submissão ID: $submissionId com nota: $grade');
+      
+      // Primeiro, buscar a submissão para obter os dados necessários
+      final submissionDoc = await _firestore
+          .collection(submissionsCollection)
+          .doc(submissionId)
+          .get();
+      
+      if (!submissionDoc.exists) {
+        throw 'Submissão não encontrada';
+      }
+      
+      final submissionData = submissionDoc.data() as Map<String, dynamic>;
+      final studentId = submissionData['studentId'] as String;
+      final activityId = submissionData['activityId'] as String;
+      final disciplineId = submissionData['disciplineId'] as String;
+      
+      print('DEBUG - Dados da submissão: studentId=$studentId, activityId=$activityId, disciplineId=$disciplineId');
+      
+      // Atualizar a submissão
+      await _firestore
+          .collection(submissionsCollection)
+          .doc(submissionId)
+          .update({
+        'grade': grade,
+        'teacherComments': teacherComments,
+        'gradedAt': FieldValue.serverTimestamp(),
+        'status': 'graded',
+      });
+      
+      print('DEBUG - Submissão atualizada com sucesso');
+      
+      // Criar ou atualizar a nota na coleção grades
+      final gradeId = '${studentId}_${activityId}';
+      final gradeModel = GradeModel(
+        id: gradeId,
+        studentId: studentId,
+        activityId: activityId,
+        disciplineId: disciplineId,
+        grade: grade,
+        comments: teacherComments,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      
+      await _firestore
+          .collection(gradesCollection)
+          .doc(gradeId)
+          .set(gradeModel.toMap());
+      
+      print('DEBUG - Nota criada/atualizada com sucesso na coleção grades');
+    } catch (e) {
+      print('DEBUG - Erro ao avaliar submissão: $e');
+      throw 'Erro ao avaliar submissão: $e';
+    }
+  }
+
+  // Atualizar submissão
+  Future<void> updateSubmission(SubmissionModel submission) async {
+    try {
+      print('DEBUG - Atualizando submissão ID: ${submission.id}');
+      
+      if (submission.id.isEmpty) {
+        throw 'ID da submissão não pode estar vazio para atualização';
+      }
+      
+      final submissionData = submission.toMap();
+      print('DEBUG - Dados da submissão para atualização: $submissionData');
+      
+      await _firestore
+          .collection(submissionsCollection)
+          .doc(submission.id)
+          .update(submissionData);
+      
+      print('DEBUG - Submissão atualizada com sucesso');
+    } catch (e) {
+      print('DEBUG - Erro ao atualizar submissão: $e');
+      throw 'Erro ao atualizar submissão: $e';
+    }
+  }
+
+  // Deletar submissão
+  Future<void> deleteSubmission(String submissionId) async {
+    try {
+      await _firestore
+          .collection(submissionsCollection)
+          .doc(submissionId)
+          .delete();
+    } catch (e) {
+      throw 'Erro ao deletar submissão: $e';
+    }
+  }
+
+  // ========== CHAT ==========
+
+  // Enviar mensagem de chat
+  Future<void> sendChatMessage(ChatMessageModel message) async {
+    try {
+      print('DEBUG - Enviando mensagem: ${message.content}');
+      print('DEBUG - De: ${message.senderId} para: ${message.receiverId}');
+      
+      final messageData = message.toMap();
+      messageData.remove('id'); // Remove o ID para que o Firestore gere um novo
+      
+      print('DEBUG - Dados da mensagem: $messageData');
+      
+      final docRef = await _firestore
+          .collection(chatMessagesCollection)
+          .add(messageData);
+      
+      print('DEBUG - Mensagem salva com ID: ${docRef.id}');
+    } catch (e) {
+      print('DEBUG - Erro ao enviar mensagem: $e');
+      throw 'Erro ao enviar mensagem: $e';
+    }
+  }
+
+  // Buscar mensagens de chat entre dois usuários
+  Future<List<ChatMessageModel>> getChatMessages(String userId1, String userId2) async {
+    try {
+      // Buscar mensagens onde userId1 é o remetente e userId2 é o destinatário
+      QuerySnapshot query1 = await _firestore
+          .collection(chatMessagesCollection)
+          .where('senderId', isEqualTo: userId1)
+          .where('receiverId', isEqualTo: userId2)
+          .orderBy('timestamp', descending: false)
+          .get();
+
+      // Buscar mensagens onde userId2 é o remetente e userId1 é o destinatário
+      QuerySnapshot query2 = await _firestore
+          .collection(chatMessagesCollection)
+          .where('senderId', isEqualTo: userId2)
+          .where('receiverId', isEqualTo: userId1)
+          .orderBy('timestamp', descending: false)
+          .get();
+
+      List<ChatMessageModel> messages = [];
+
+      // Adicionar mensagens da primeira query
+      for (var doc in query1.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        messages.add(ChatMessageModel.fromMap(data));
+      }
+
+      // Adicionar mensagens da segunda query
+      for (var doc in query2.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        messages.add(ChatMessageModel.fromMap(data));
+      }
+
+      // Ordenar todas as mensagens por timestamp
+      messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+      return messages;
+    } catch (e) {
+      throw 'Erro ao buscar mensagens: $e';
+    }
+  }
+
+  // Marcar mensagens como lidas
+  Future<void> markChatMessagesAsRead(String userId1, String userId2) async {
+    try {
+      // Buscar mensagens não lidas onde userId1 é o destinatário
+      QuerySnapshot query = await _firestore
+          .collection(chatMessagesCollection)
+          .where('receiverId', isEqualTo: userId1)
+          .where('senderId', isEqualTo: userId2)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      // Atualizar cada mensagem como lida
+      for (var doc in query.docs) {
+        await doc.reference.update({
+          'isRead': true,
+          'readAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      throw 'Erro ao marcar mensagens como lidas: $e';
+    }
+  }
+
+  // Buscar conversas do usuário (lista de usuários com quem há conversas)
+  Future<List<UserModel>> getUserConversations(String userId) async {
+    try {
+      // Buscar mensagens onde o usuário é remetente ou destinatário
+      QuerySnapshot query = await _firestore
+          .collection(chatMessagesCollection)
+          .where('senderId', isEqualTo: userId)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      Set<String> conversationUserIds = {};
+
+      // Adicionar IDs dos destinatários
+      for (var doc in query.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final receiverId = data['receiverId'] as String?;
+        if (receiverId != null && receiverId.isNotEmpty) {
+          conversationUserIds.add(receiverId);
+        }
+      }
+
+      // Buscar mensagens onde o usuário é destinatário
+      QuerySnapshot query2 = await _firestore
+          .collection(chatMessagesCollection)
+          .where('receiverId', isEqualTo: userId)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      // Adicionar IDs dos remetentes
+      for (var doc in query2.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final senderId = data['senderId'] as String?;
+        if (senderId != null && senderId.isNotEmpty) {
+          conversationUserIds.add(senderId);
+        }
+      }
+
+      // Buscar dados dos usuários
+      List<UserModel> conversations = [];
+      for (String otherUserId in conversationUserIds) {
+        if (otherUserId != userId && otherUserId.isNotEmpty) {
+          final userData = await getUser(otherUserId);
+          if (userData != null) {
+            conversations.add(UserModel.fromMap(userData));
+          }
+        }
+      }
+
+      return conversations;
+    } catch (e) {
+      throw 'Erro ao buscar conversas: $e';
+    }
+  }
+
+  // Stream de mensagens de chat entre dois usuários
+  Stream<List<ChatMessageModel>> getChatMessagesStream(String userId1, String userId2) {
+    try {
+      print('DEBUG - Criando stream para usuários: $userId1 e $userId2');
+      
+      // Usar duas queries separadas que respeitam as regras de segurança
+      final stream1 = _firestore
+          .collection(chatMessagesCollection)
+          .where('senderId', isEqualTo: userId1)
+          .where('receiverId', isEqualTo: userId2)
+          .orderBy('timestamp', descending: false)
+          .snapshots();
+
+      final stream2 = _firestore
+          .collection(chatMessagesCollection)
+          .where('senderId', isEqualTo: userId2)
+          .where('receiverId', isEqualTo: userId1)
+          .orderBy('timestamp', descending: false)
+          .snapshots();
+
+      // Combinar os dois streams usando combineLatest
+      return stream1.asyncExpand((snapshot1) {
+        return stream2.map((snapshot2) {
+          List<ChatMessageModel> messages = [];
+
+          print('DEBUG - Stream1: ${snapshot1.docs.length} docs, Stream2: ${snapshot2.docs.length} docs');
+
+          // Adicionar mensagens da primeira query
+          for (var doc in snapshot1.docs) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            messages.add(ChatMessageModel.fromMap(data));
+            print('DEBUG - Mensagem 1 adicionada: ${data['content']}');
+          }
+
+          // Adicionar mensagens da segunda query
+          for (var doc in snapshot2.docs) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            messages.add(ChatMessageModel.fromMap(data));
+            print('DEBUG - Mensagem 2 adicionada: ${data['content']}');
+          }
+
+          // Ordenar mensagens por timestamp
+          messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+          print('DEBUG - Retornando ${messages.length} mensagens combinadas');
+          return messages;
+        });
+      });
+    } catch (e) {
+      print('DEBUG - Erro no stream: $e');
+      throw 'Erro ao criar stream de mensagens: $e';
     }
   }
 }

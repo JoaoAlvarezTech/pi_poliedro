@@ -6,8 +6,9 @@ import '../../models/user_model.dart';
 import '../../models/discipline_model.dart';
 import '../../theme/app_theme.dart';
 import 'disciplines_screen.dart';
+import 'discipline_detail_screen.dart';
+import '../chat/conversations_screen.dart';
 import 'students_screen.dart';
-import 'messages_screen.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -22,8 +23,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   
   UserModel? _currentUser;
   List<DisciplineModel> _disciplines = [];
-  int _totalStudents = 0;
-  final int _unreadMessages = 0;
   bool _isLoading = true;
 
   @override
@@ -46,17 +45,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
         // Buscar disciplinas do professor
         final disciplines = await _firestoreService.getTeacherDisciplines(user.uid);
-        
-        // Calcular total de alunos
-        int totalStudents = 0;
-        for (var discipline in disciplines) {
-          final students = await _firestoreService.getDisciplineStudents(discipline.id);
-          totalStudents += students.length;
-        }
 
         setState(() {
           _disciplines = disciplines;
-          _totalStudents = totalStudents;
           _isLoading = false;
         });
       }
@@ -145,20 +136,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cards de estatísticas
-                  _buildStatsCards(),
-                  const SizedBox(height: 32),
-                  
                   // Seção de disciplinas
                   _buildDisciplinesSection(),
                   const SizedBox(height: 32),
                   
                   // Ações rápidas
                   _buildQuickActions(),
-                  const SizedBox(height: 32),
-                  
-                  // Ações adicionais
-                  _buildAdditionalActions(),
                 ],
               ),
             ),
@@ -226,6 +209,27 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     ),
                   ),
                   IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ConversationsScreen(),
+                        ),
+                      );
+                    },
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chat,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  IconButton(
                     onPressed: _signOut,
                     icon: Container(
                       padding: const EdgeInsets.all(8),
@@ -249,186 +253,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildStatsCards() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Visão Geral',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            // Para telas pequenas (mobile), usar layout vertical
-            if (constraints.maxWidth < 600) {
-              return Column(
-                children: [
-                  _buildModernStatCard(
-                    title: 'Disciplinas',
-                    value: _disciplines.length.toString(),
-                    icon: Icons.school,
-                    gradient: AppTheme.primaryGradient,
-                    subtitle: 'Ativas',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernStatCard(
-                    title: 'Alunos',
-                    value: _totalStudents.toString(),
-                    icon: Icons.people,
-                    gradient: AppTheme.secondaryGradient,
-                    subtitle: 'Matriculados',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernStatCard(
-                    title: 'Mensagens',
-                    value: _unreadMessages.toString(),
-                    icon: Icons.message,
-                    gradient: AppTheme.accentGradient,
-                    subtitle: 'Não lidas',
-                  ),
-                ],
-              );
-            }
-            
-            // Para telas maiores, usar layout horizontal
-            return Row(
-              children: [
-                Expanded(
-                  child: _buildModernStatCard(
-                    title: 'Disciplinas',
-                    value: _disciplines.length.toString(),
-                    icon: Icons.school,
-                    gradient: AppTheme.primaryGradient,
-                    subtitle: 'Ativas',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildModernStatCard(
-                    title: 'Alunos',
-                    value: _totalStudents.toString(),
-                    icon: Icons.people,
-                    gradient: AppTheme.secondaryGradient,
-                    subtitle: 'Matriculados',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildModernStatCard(
-                    title: 'Mensagens',
-                    value: _unreadMessages.toString(),
-                    icon: Icons.message,
-                    gradient: AppTheme.accentGradient,
-                    subtitle: 'Não lidas',
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
 
-  Widget _buildModernStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Gradient gradient,
-    required String subtitle,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Para mobile, usar altura menor e layout mais compacto
-        final isMobile = constraints.maxWidth < 600;
-        final padding = isMobile ? 12.0 : 16.0;
-        final iconSize = isMobile ? 18.0 : 22.0;
-        final valueFontSize = isMobile ? 20.0 : 24.0;
-        final titleFontSize = isMobile ? 12.0 : 14.0;
-        final subtitleFontSize = isMobile ? 10.0 : 12.0;
-        
-        return Container(
-          constraints: BoxConstraints(
-            minHeight: isMobile ? 80.0 : 100.0,
-            maxHeight: isMobile ? 90.0 : 110.0,
-          ),
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: gradient.colors.first.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(isMobile ? 4 : 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: iconSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: valueFontSize,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: titleFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: subtitleFontSize,
-                        color: Colors.white.withOpacity(0.8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildDisciplinesSection() {
     return Column(
@@ -456,7 +281,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const DisciplinesScreen(),
+                        builder: (_) => const DisciplinesScreen(showCreateForm: true),
                       ),
                     );
                   },
@@ -562,7 +387,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => DisciplinesScreen(selectedDiscipline: discipline),
+            builder: (_) => DisciplineDetailScreen(discipline: discipline),
           ),
         );
       },
@@ -679,7 +504,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const MessagesScreen(),
+                      builder: (_) => const ConversationsScreen(),
                     ),
                   );
                 },
@@ -763,94 +588,5 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildAdditionalActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Mais Ações',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildAdditionalActionCard(
-                title: 'Atividades',
-                icon: Icons.assignment,
-                color: AppTheme.secondaryColor,
-                onTap: () {
-                  // TODO: Implementar navegação para atividades
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildAdditionalActionCard(
-                title: 'Notas',
-                icon: Icons.grade,
-                color: AppTheme.accentColor,
-                onTap: () {
-                  // TODO: Implementar navegação para notas
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildAdditionalActionCard(
-                title: 'Materiais',
-                icon: Icons.folder,
-                color: AppTheme.primaryColor,
-                onTap: () {
-                  // TODO: Implementar navegação para materiais
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdditionalActionCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return AppCard(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
