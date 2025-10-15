@@ -10,6 +10,7 @@ import 'materials_screen.dart';
 import 'students_screen.dart';
 import 'submissions_screen.dart';
 import 'student_detail_screen.dart';
+import 'grades_overview_screen.dart';
 
 class DisciplineDetailScreen extends StatefulWidget {
   final DisciplineModel discipline;
@@ -33,7 +34,7 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadDisciplineData();
   }
 
@@ -100,6 +101,7 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
             Tab(icon: Icon(Icons.assignment), text: 'Atividades'),
             Tab(icon: Icon(Icons.folder), text: 'Materiais'),
             Tab(icon: Icon(Icons.people), text: 'Alunos'),
+            Tab(icon: Icon(Icons.analytics), text: 'Médias'),
           ],
         ),
       ),
@@ -116,6 +118,7 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                 _buildActivitiesTab(),
                 _buildMaterialsTab(),
                 _buildStudentsTab(),
+                _buildGradesTab(),
               ],
             ),
     );
@@ -492,5 +495,9 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
       default:
         return 'Documento';
     }
+  }
+
+  Widget _buildGradesTab() {
+    return GradesOverviewScreen(discipline: widget.discipline);
   }
 }
