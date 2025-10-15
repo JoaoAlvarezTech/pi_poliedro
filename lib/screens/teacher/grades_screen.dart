@@ -4,6 +4,7 @@ import '../../models/discipline_model.dart';
 import '../../models/activity_model.dart';
 import '../../models/grade_model.dart';
 import '../../models/student_discipline_model.dart';
+import 'batch_grading_screen.dart';
 
 class GradesScreen extends StatefulWidget {
   final DisciplineModel discipline;
@@ -21,7 +22,7 @@ class GradesScreen extends StatefulWidget {
 
 class _GradesScreenState extends State<GradesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<StudentDisciplineModel> _students = [];
   Map<String, GradeModel> _grades = {};
   bool _isLoading = true;
@@ -34,13 +35,17 @@ class _GradesScreenState extends State<GradesScreen> {
 
   Future<void> _loadData() async {
     try {
-      final students = await _firestoreService.getDisciplineStudents(widget.discipline.id);
-      
+      final students =
+          await _firestoreService.getDisciplineStudents(widget.discipline.id);
+
       // Buscar notas existentes
       Map<String, GradeModel> grades = {};
       for (var student in students) {
-        final studentGrades = await _firestoreService.getStudentGrades(student.studentId, widget.discipline.id);
-        final grade = studentGrades.where((g) => g.activityId == widget.activity.id).firstOrNull;
+        final studentGrades = await _firestoreService.getStudentGrades(
+            student.studentId, widget.discipline.id);
+        final grade = studentGrades
+            .where((g) => g.activityId == widget.activity.id)
+            .firstOrNull;
         if (grade != null) {
           grades[student.studentId] = grade;
         }
@@ -73,11 +78,11 @@ class _GradesScreenState extends State<GradesScreen> {
       );
 
       await _firestoreService.setGrade(gradeModel);
-      
+
       setState(() {
         _grades[studentId] = gradeModel;
       });
-      
+
       _showSuccessDialog('Nota salva com sucesso!');
     } catch (e) {
       _showErrorDialog('Erro ao salvar nota: $e');
@@ -124,6 +129,25 @@ class _GradesScreenState extends State<GradesScreen> {
         backgroundColor: const Color(0xFF00A5B5),
         foregroundColor: Colors.white,
         title: Text('Notas - ${widget.activity.name}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.table_chart),
+            tooltip: 'Avaliação em Lote',
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => BatchGradingScreen(
+                    activityId: widget.activity.id,
+                  ),
+                ),
+              );
+              if (result == true) {
+                // Recarregar dados se houve alterações
+                _loadData();
+              }
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -158,12 +182,14 @@ class _GradesScreenState extends State<GradesScreen> {
             Row(
               children: [
                 Chip(
-                  label: Text('Peso: ${(widget.activity.weight * 100).toStringAsFixed(0)}%'),
+                  label: Text(
+                      'Peso: ${(widget.activity.weight * 100).toStringAsFixed(0)}%'),
                   backgroundColor: const Color(0xFF00A5B5).withOpacity(0.1),
                 ),
                 const SizedBox(width: 8),
                 Chip(
-                  label: Text('Nota máxima: ${widget.activity.maxGrade.toStringAsFixed(1)}'),
+                  label: Text(
+                      'Nota máxima: ${widget.activity.maxGrade.toStringAsFixed(1)}'),
                   backgroundColor: const Color(0xFFEB2E54).withOpacity(0.1),
                 ),
               ],
@@ -202,7 +228,7 @@ class _GradesScreenState extends State<GradesScreen> {
       itemBuilder: (context, index) {
         final student = _students[index];
         final grade = _grades[student.studentId];
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
@@ -215,7 +241,7 @@ class _GradesScreenState extends State<GradesScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              grade != null 
+              grade != null
                   ? 'Nota: ${grade.grade.toStringAsFixed(1)}'
                   : 'Sem nota',
             ),
@@ -231,10 +257,13 @@ class _GradesScreenState extends State<GradesScreen> {
                 ),
                 onFieldSubmitted: (value) {
                   final gradeValue = double.tryParse(value);
-                  if (gradeValue != null && gradeValue >= 0 && gradeValue <= widget.activity.maxGrade) {
+                  if (gradeValue != null &&
+                      gradeValue >= 0 &&
+                      gradeValue <= widget.activity.maxGrade) {
                     _saveGrade(student.studentId, gradeValue);
                   } else {
-                    _showErrorDialog('Nota deve estar entre 0 e ${widget.activity.maxGrade}');
+                    _showErrorDialog(
+                        'Nota deve estar entre 0 e ${widget.activity.maxGrade}');
                   }
                 },
               ),

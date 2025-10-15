@@ -7,6 +7,7 @@ import '../../models/submission_model.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_theme.dart';
 import 'grade_submission_screen.dart';
+import 'batch_grading_screen.dart';
 
 class SubmissionsScreen extends StatefulWidget {
   final ActivityModel activity;
@@ -24,7 +25,7 @@ class SubmissionsScreen extends StatefulWidget {
 
 class _SubmissionsScreenState extends State<SubmissionsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<SubmissionModel> _submissions = [];
   List<UserModel> _students = [];
   bool _isLoading = true;
@@ -37,18 +38,21 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
 
   Future<void> _loadSubmissions() async {
     try {
-      final submissions = await _firestoreService.getActivitySubmissions(widget.activity.id);
-      final studentDisciplines = await _firestoreService.getDisciplineStudents(widget.discipline.id);
-      
+      final submissions =
+          await _firestoreService.getActivitySubmissions(widget.activity.id);
+      final studentDisciplines =
+          await _firestoreService.getDisciplineStudents(widget.discipline.id);
+
       // Buscar dados completos dos alunos
       List<UserModel> students = [];
       for (var studentDiscipline in studentDisciplines) {
-        final userData = await _firestoreService.getUser(studentDiscipline.studentId);
+        final userData =
+            await _firestoreService.getUser(studentDiscipline.studentId);
         if (userData != null) {
           students.add(UserModel.fromMap(userData));
         }
       }
-      
+
       setState(() {
         _submissions = submissions;
         _students = students;
@@ -129,7 +133,6 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,11 +148,31 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.table_chart),
+            tooltip: 'Avaliação em Lote',
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => BatchGradingScreen(
+                    activityId: widget.activity.id,
+                  ),
+                ),
+              );
+              if (result == true) {
+                // Recarregar dados se houve alterações
+                _loadSubmissions();
+              }
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _buildContent(),
@@ -201,13 +224,46 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _submissions.length,
-      itemBuilder: (context, index) {
-        final submission = _submissions[index];
-        return _buildSubmissionCard(submission);
-      },
+    return Column(
+      children: [
+        // Botão de avaliação em lote
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.all(16),
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => BatchGradingScreen(
+                    activityId: widget.activity.id,
+                  ),
+                ),
+              );
+              if (result == true) {
+                _loadSubmissions();
+              }
+            },
+            icon: const Icon(Icons.table_chart),
+            label: const Text('Avaliação em Lote'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        // Lista de submissões
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _submissions.length,
+            itemBuilder: (context, index) {
+              final submission = _submissions[index];
+              return _buildSubmissionCard(submission);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -227,7 +283,7 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  gradient: isGraded 
+                  gradient: isGraded
                       ? AppTheme.successGradient
                       : AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(25),
@@ -264,7 +320,8 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
               ),
               if (isOverdue)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.errorColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
@@ -369,7 +426,8 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
               ],
               if (isGraded) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     gradient: AppTheme.successGradient,
                     borderRadius: BorderRadius.circular(12),
@@ -383,15 +441,14 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
                     ),
                   ),
                 ),
-              ] else ...[
-                AppButton(
-                  text: 'Avaliar',
-                  icon: Icons.grade,
-                  onPressed: () => _gradeSubmission(submission),
-                  width: 120,
-                  height: 48,
-                ),
+                const SizedBox(width: 12),
               ],
+              AppButton(
+                text: isGraded ? 'Reavaliar' : 'Avaliar',
+                icon: Icons.grade,
+                onPressed: () => _gradeSubmission(submission),
+                height: 48,
+              ),
             ],
           ),
           if (isGraded && submission.teacherComments != null) ...[

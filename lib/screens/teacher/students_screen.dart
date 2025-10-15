@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/firestore_service.dart';
+import '../../theme/app_theme.dart';
 import '../../models/discipline_model.dart';
 import '../../models/student_discipline_model.dart';
 import '../../models/user_model.dart';
@@ -8,11 +9,13 @@ import 'student_detail_screen.dart';
 class StudentsScreen extends StatefulWidget {
   final DisciplineModel? discipline;
   final StudentDisciplineModel? selectedStudent;
+  final bool openEnrollForm;
 
   const StudentsScreen({
     super.key,
     this.discipline,
     this.selectedStudent,
+    this.openEnrollForm = false,
   });
 
   @override
@@ -22,19 +25,26 @@ class StudentsScreen extends StatefulWidget {
 class _StudentsScreenState extends State<StudentsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final _formKey = GlobalKey<FormState>();
-  
+
   List<StudentDisciplineModel> _students = [];
   List<UserModel> _allStudents = [];
   List<UserModel> _filteredStudents = [];
   bool _isLoading = true;
   bool _showEnrollForm = false;
-  
+  bool _isEnrollingByRA = false;
+  final Map<String, bool> _isEnrollingMap = {};
+  final Map<String, bool> _isUnenrollingMap = {};
+
   final TextEditingController _raController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    // Abrir formulário de matrícula automaticamente se solicitado e houver disciplina
+    if (widget.discipline != null && widget.openEnrollForm) {
+      _showEnrollForm = true;
+    }
     _loadData();
   }
 
@@ -49,11 +59,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
     try {
       if (widget.discipline != null) {
         // Carregar alunos da disciplina
-        final students = await _firestoreService.getDisciplineStudents(widget.discipline!.id);
-        
+        final students = await _firestoreService
+            .getDisciplineStudents(widget.discipline!.id);
+
         // Também carregar todos os alunos para permitir matrícula
         final allStudents = await _firestoreService.getAllStudents();
-        
+
         setState(() {
           _students = students;
           _allStudents = allStudents;
@@ -81,8 +92,11 @@ class _StudentsScreenState extends State<StudentsScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
+      setState(() {
+        _isEnrollingByRA = true;
+      });
       final ra = _raController.text.trim();
-      
+
       // Buscar aluno pelo RA
       final student = await _firestoreService.getStudentByRA(ra);
       if (student == null) {
@@ -92,10 +106,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
 
       if (widget.discipline != null) {
         // Verificar se já está matriculado
-        final existingEnrollment = _students
-            .where((s) => s.studentId == student.uid)
-            .firstOrNull;
-        
+        final existingEnrollment =
+            _students.where((s) => s.studentId == student.uid).firstOrNull;
+
         if (existingEnrollment != null) {
           _showErrorDialog('Aluno já está matriculado nesta disciplina');
           return;
@@ -112,17 +125,23 @@ class _StudentsScreenState extends State<StudentsScreen> {
         );
 
         await _firestoreService.enrollStudentInDiscipline(enrollment);
-        
+
         _raController.clear();
         setState(() {
           _showEnrollForm = false;
         });
-        
+
         _loadData();
         _showSuccessDialog('Aluno matriculado com sucesso!');
       }
     } catch (e) {
       _showErrorDialog('Erro ao matricular aluno: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEnrollingByRA = false;
+        });
+      }
     }
   }
 
@@ -130,11 +149,13 @@ class _StudentsScreenState extends State<StudentsScreen> {
     if (widget.discipline == null) return;
 
     try {
+      setState(() {
+        _isEnrollingMap[student.uid] = true;
+      });
       // Verificar se já está matriculado
-      final existingEnrollment = _students
-          .where((s) => s.studentId == student.uid)
-          .firstOrNull;
-      
+      final existingEnrollment =
+          _students.where((s) => s.studentId == student.uid).firstOrNull;
+
       if (existingEnrollment != null) {
         _showErrorDialog('Aluno já está matriculado nesta disciplina');
         return;
@@ -151,11 +172,17 @@ class _StudentsScreenState extends State<StudentsScreen> {
       );
 
       await _firestoreService.enrollStudentInDiscipline(enrollment);
-      
+
       _loadData();
       _showSuccessDialog('Aluno matriculado com sucesso!');
     } catch (e) {
       _showErrorDialog('Erro ao matricular aluno: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEnrollingMap[student.uid] = false;
+        });
+      }
     }
   }
 
@@ -189,15 +216,24 @@ class _StudentsScreenState extends State<StudentsScreen> {
     if (widget.discipline == null) return;
 
     try {
+      setState(() {
+        _isUnenrollingMap[student.studentId] = true;
+      });
       await _firestoreService.unenrollStudentFromDiscipline(
         student.studentId,
         widget.discipline!.id,
       );
-      
+
       _loadData();
       _showSuccessDialog('Aluno desmatriculado com sucesso!');
     } catch (e) {
       _showErrorDialog('Erro ao desmatricular aluno: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUnenrollingMap[student.studentId] = false;
+        });
+      }
     }
   }
 
@@ -211,10 +247,10 @@ class _StudentsScreenState extends State<StudentsScreen> {
           final ra = student.ra?.toLowerCase() ?? '';
           final email = student.email.toLowerCase();
           final searchQuery = query.toLowerCase();
-          
-          return name.contains(searchQuery) || 
-                 ra.contains(searchQuery) || 
-                 email.contains(searchQuery);
+
+          return name.contains(searchQuery) ||
+              ra.contains(searchQuery) ||
+              email.contains(searchQuery);
         }).toList();
       }
     });
@@ -255,11 +291,11 @@ class _StudentsScreenState extends State<StudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-        title: Text(widget.discipline != null 
+        title: Text(widget.discipline != null
             ? 'Alunos - ${widget.discipline!.name}'
             : 'Todos os Alunos'),
         actions: [
@@ -278,7 +314,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                if (_showEnrollForm && widget.discipline != null) _buildEnrollForm(),
+                if (_showEnrollForm && widget.discipline != null)
+                  _buildEnrollForm(),
                 if (widget.discipline == null) _buildSearchBar(),
                 Expanded(child: _buildStudentsList()),
               ],
@@ -299,7 +336,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFEB2E54),
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -307,7 +344,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
               'Selecione um aluno da lista abaixo ou digite o RA:',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: AppTheme.textSecondary,
               ),
             ),
             const SizedBox(height: 16),
@@ -328,12 +365,21 @@ class _StudentsScreenState extends State<StudentsScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _enrollStudentByRA,
+                    onPressed: _isEnrollingByRA ? null : _enrollStudentByRA,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00A5B5),
+                      backgroundColor: AppTheme.accentColor,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Matricular por RA'),
+                    child: _isEnrollingByRA
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Matricular por RA'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -357,7 +403,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF00A5B5),
+                color: AppTheme.accentColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -365,26 +411,26 @@ class _StudentsScreenState extends State<StudentsScreen> {
             SizedBox(
               height: 200,
               child: _allStudents.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'Nenhum aluno cadastrado',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Colors.grey.shade600),
                       ),
                     )
                   : ListView.builder(
                       itemCount: _allStudents.length,
                       itemBuilder: (context, index) {
                         final student = _allStudents[index];
-                        final isAlreadyEnrolled = _students
-                            .any((s) => s.studentId == student.uid);
-                        
+                        final isAlreadyEnrolled =
+                            _students.any((s) => s.studentId == student.uid);
+
                         return ListTile(
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: isAlreadyEnrolled 
-                                ? Colors.grey 
-                                : const Color(0xFF00A5B5),
+                            backgroundColor: isAlreadyEnrolled
+                                ? Colors.grey
+                                : AppTheme.accentColor,
                             child: Icon(
                               isAlreadyEnrolled ? Icons.check : Icons.person,
                               size: 16,
@@ -395,29 +441,39 @@ class _StudentsScreenState extends State<StudentsScreen> {
                             student.name,
                             style: TextStyle(
                               fontSize: 14,
-                              color: isAlreadyEnrolled ? Colors.grey : null,
+                              color: isAlreadyEnrolled ? Colors.grey : AppTheme.textPrimary,
                             ),
                           ),
                           subtitle: Text(
                             'RA: ${student.ra ?? 'N/A'}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isAlreadyEnrolled ? Colors.grey : Colors.grey[600],
+                              color: isAlreadyEnrolled
+                                  ? Colors.grey
+                                  : Colors.grey[600],
                             ),
                           ),
                           trailing: isAlreadyEnrolled
                               ? const Text(
                                   'Matriculado',
                                   style: TextStyle(
-                                    color: Colors.green,
+                                    color: AppTheme.successColor,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 )
-                              : IconButton(
-                                  icon: const Icon(Icons.add, size: 20),
-                                  onPressed: () => _enrollStudent(student),
-                                ),
+                              : (_isEnrollingMap[student.uid] == true
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(Icons.add, size: 20),
+                                      onPressed: () => _enrollStudent(student),
+                                    )),
                           enabled: !isAlreadyEnrolled,
                         );
                       },
@@ -500,22 +556,30 @@ class _StudentsScreenState extends State<StudentsScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: const CircleAvatar(
-              backgroundColor: Color(0xFFEB2E54),
+              backgroundColor: AppTheme.primaryColor,
               child: Icon(Icons.person, color: Colors.white),
             ),
             title: Text(
               student.studentName,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text('Matriculado em: ${_formatDate(student.enrolledAt)}'),
+            subtitle:
+                Text('Matriculado em: ${_formatDate(student.enrolledAt)}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  onPressed: () => _showUnenrollDialog(student),
-                  icon: const Icon(Icons.person_remove, color: Colors.red),
-                  tooltip: 'Desmatricular',
-                ),
+                if (_isUnenrollingMap[student.studentId] == true)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    onPressed: () => _showUnenrollDialog(student),
+                    icon: Icon(Icons.person_remove, color: AppTheme.errorColor),
+                    tooltip: 'Desmatricular',
+                  ),
                 const Icon(Icons.arrow_forward_ios),
               ],
             ),
@@ -591,7 +655,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: const CircleAvatar(
-              backgroundColor: Color(0xFFEB2E54),
+              backgroundColor: AppTheme.primaryColor,
               child: Icon(Icons.person, color: Colors.white),
             ),
             title: Text(

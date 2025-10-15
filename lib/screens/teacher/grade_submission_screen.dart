@@ -30,7 +30,7 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _gradeController = TextEditingController();
   final _commentsController = TextEditingController();
-  
+
   bool _isLoading = false;
   double? _currentGrade;
 
@@ -60,8 +60,8 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
       });
 
       final grade = double.parse(_gradeController.text);
-      final comments = _commentsController.text.trim().isEmpty 
-          ? null 
+      final comments = _commentsController.text.trim().isEmpty
+          ? null
           : _commentsController.text.trim();
 
       await _firestoreService.gradeSubmission(
@@ -71,10 +71,11 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
       );
 
       _showSuccessDialog('Nota salva com sucesso!');
-      
+
       // Aguardar um pouco antes de voltar
       await Future.delayed(const Duration(milliseconds: 1000));
-      Navigator.of(context).pop(true); // Retorna true para indicar que foi salvo
+      Navigator.of(context)
+          .pop(true); // Retorna true para indicar que foi salvo
     } catch (e) {
       _showErrorDialog('Erro ao salvar nota: $e');
     } finally {
@@ -157,25 +158,25 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
               // Informações do aluno
               _buildStudentInfo(),
               const SizedBox(height: 20),
-              
+
               // Informações da atividade
               _buildActivityInfo(),
               const SizedBox(height: 20),
-              
+
               // Arquivo enviado
               _buildFileSection(),
               const SizedBox(height: 20),
-              
+
               // Comentários do aluno
               if (widget.submission.comments != null) ...[
                 _buildStudentComments(),
                 const SizedBox(height: 20),
               ],
-              
+
               // Avaliação
               _buildGradingSection(),
               const SizedBox(height: 30),
-              
+
               // Botão salvar
               _buildSaveButton(),
             ],
@@ -480,13 +481,14 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Campo de nota
           TextFormField(
             controller: _gradeController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: 'Nota (0.0 - ${widget.activity.maxGrade.toStringAsFixed(1)})',
+              labelText:
+                  'Nota (0.0 - ${widget.activity.maxGrade.toStringAsFixed(1)})',
               prefixIcon: const Icon(Icons.grade),
               suffixText: '/ ${widget.activity.maxGrade.toStringAsFixed(1)}',
             ),
@@ -511,7 +513,7 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
             },
           ),
           const SizedBox(height: 20),
-          
+
           // Campo de comentários do professor
           TextFormField(
             controller: _commentsController,
@@ -531,7 +533,9 @@ class _GradeSubmissionScreenState extends State<GradeSubmissionScreen> {
     return SizedBox(
       width: double.infinity,
       child: AppButton(
-        text: _isLoading ? 'Salvando...' : 'Salvar Nota',
+        text: _isLoading
+            ? 'Salvando...'
+            : (_currentGrade != null ? 'Atualizar Nota' : 'Salvar Nota'),
         icon: Icons.save,
         onPressed: _isLoading ? null : _saveGrade,
         isLoading: _isLoading,

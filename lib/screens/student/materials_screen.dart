@@ -15,7 +15,7 @@ class StudentMaterialsScreen extends StatefulWidget {
 
 class _StudentMaterialsScreenState extends State<StudentMaterialsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<MaterialModel> _materials = [];
   bool _isLoading = true;
 
@@ -27,7 +27,8 @@ class _StudentMaterialsScreenState extends State<StudentMaterialsScreen> {
 
   Future<void> _loadMaterials() async {
     try {
-      final materials = await _firestoreService.getDisciplineMaterials(widget.discipline.id);
+      final materials =
+          await _firestoreService.getDisciplineMaterials(widget.discipline.id);
       setState(() {
         _materials = materials;
         _isLoading = false;
@@ -139,7 +140,8 @@ class _StudentMaterialsScreenState extends State<StudentMaterialsScreen> {
                   children: [
                     Chip(
                       label: Text(_getMaterialTypeName(material.type)),
-                      backgroundColor: _getMaterialColor(material.type).withOpacity(0.1),
+                      backgroundColor:
+                          _getMaterialColor(material.type).withOpacity(0.1),
                     ),
                     const SizedBox(width: 8),
                     Text(

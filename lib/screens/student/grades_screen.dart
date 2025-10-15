@@ -16,7 +16,7 @@ class StudentGradesScreen extends StatefulWidget {
 
 class _StudentGradesScreenState extends State<StudentGradesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<GradeModel> _grades = [];
   List<ActivityModel> _activities = [];
   double _average = 0.0;
@@ -36,11 +36,11 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
           user.uid,
           widget.discipline.id,
         );
-        
+
         final activities = await _firestoreService.getDisciplineActivities(
           widget.discipline.id,
         );
-        
+
         final average = await _firestoreService.calculateStudentAverage(
           user.uid,
           widget.discipline.id,
@@ -195,14 +195,13 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   }
 
   Widget _buildGradeCard(GradeModel grade) {
-    final activity = _activities
-        .where((a) => a.id == grade.activityId)
-        .firstOrNull;
-    
+    final activity =
+        _activities.where((a) => a.id == grade.activityId).firstOrNull;
+
     if (activity == null) return const SizedBox.shrink();
 
     final percentage = (grade.grade / activity.maxGrade) * 100;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -226,8 +225,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
             Text('Peso: ${(activity.weight * 100).toStringAsFixed(0)}%'),
             Text('Nota máxima: ${activity.maxGrade.toStringAsFixed(1)}'),
             Text('Prazo: ${_formatDate(activity.dueDate)}'),
-            if (grade.comments != null) 
-              Text('Comentário: ${grade.comments}'),
+            if (grade.comments != null) Text('Comentário: ${grade.comments}'),
           ],
         ),
         trailing: Column(

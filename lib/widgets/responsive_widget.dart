@@ -29,7 +29,8 @@ class ResponsiveWidget extends StatelessWidget {
 }
 
 class ResponsiveBuilder extends StatelessWidget {
-  final Widget Function(BuildContext context, ResponsiveBreakpoint breakpoint) builder;
+  final Widget Function(BuildContext context, ResponsiveBreakpoint breakpoint)
+      builder;
 
   const ResponsiveBuilder({
     super.key,
@@ -41,7 +42,7 @@ class ResponsiveBuilder extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         ResponsiveBreakpoint breakpoint;
-        
+
         if (constraints.maxWidth >= 1200) {
           breakpoint = ResponsiveBreakpoint.desktop;
         } else if (constraints.maxWidth >= 800) {
@@ -49,7 +50,7 @@ class ResponsiveBuilder extends StatelessWidget {
         } else {
           breakpoint = ResponsiveBreakpoint.mobile;
         }
-        
+
         return builder(context, breakpoint);
       },
     );
@@ -66,7 +67,7 @@ extension ResponsiveBreakpointExtension on ResponsiveBreakpoint {
   bool get isMobile => this == ResponsiveBreakpoint.mobile;
   bool get isTablet => this == ResponsiveBreakpoint.tablet;
   bool get isDesktop => this == ResponsiveBreakpoint.desktop;
-  
+
   double get maxWidth {
     switch (this) {
       case ResponsiveBreakpoint.mobile:
@@ -101,15 +102,18 @@ class ResponsiveContainer extends StatelessWidget {
         switch (breakpoint) {
           case ResponsiveBreakpoint.mobile:
             containerMaxWidth = maxWidth ?? 600;
-            containerPadding = padding ?? const EdgeInsets.symmetric(horizontal: 16);
+            containerPadding =
+                padding ?? const EdgeInsets.symmetric(horizontal: 16);
             break;
           case ResponsiveBreakpoint.tablet:
             containerMaxWidth = maxWidth ?? 800;
-            containerPadding = padding ?? const EdgeInsets.symmetric(horizontal: 24);
+            containerPadding =
+                padding ?? const EdgeInsets.symmetric(horizontal: 24);
             break;
           case ResponsiveBreakpoint.desktop:
             containerMaxWidth = maxWidth ?? 1200;
-            containerPadding = padding ?? const EdgeInsets.symmetric(horizontal: 32);
+            containerPadding =
+                padding ?? const EdgeInsets.symmetric(horizontal: 32);
             break;
         }
 
@@ -150,7 +154,7 @@ class ResponsiveGrid extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, breakpoint) {
         int columns;
-        
+
         switch (breakpoint) {
           case ResponsiveBreakpoint.mobile:
             columns = mobileColumns;
@@ -168,9 +172,14 @@ class ResponsiveGrid extends StatelessWidget {
           runSpacing: runSpacing,
           children: children.map((child) {
             return SizedBox(
-              width: (MediaQuery.of(context).size.width - 
-                     (spacing * (columns - 1)) - 
-                     (breakpoint.isMobile ? 32 : breakpoint.isTablet ? 48 : 64)) / columns,
+              width: (MediaQuery.of(context).size.width -
+                      (spacing * (columns - 1)) -
+                      (breakpoint.isMobile
+                          ? 32
+                          : breakpoint.isTablet
+                              ? 48
+                              : 64)) /
+                  columns,
               child: child,
             );
           }).toList(),

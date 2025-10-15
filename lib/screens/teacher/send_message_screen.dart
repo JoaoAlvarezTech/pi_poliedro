@@ -22,10 +22,10 @@ class SendMessageScreen extends StatefulWidget {
 class _SendMessageScreenState extends State<SendMessageScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final _formKey = GlobalKey<FormState>();
-  
+
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  
+
   bool _isLoading = false;
 
   @override
@@ -48,7 +48,7 @@ class _SendMessageScreenState extends State<SendMessageScreen> {
         // Buscar dados do professor no Firestore
         final userData = await _firestoreService.getUser(user.uid);
         final teacherName = userData?['name'] ?? 'Professor';
-        
+
         final message = MessageModel(
           id: '', // Será gerado pelo Firestore
           senderId: user.uid,
@@ -61,10 +61,10 @@ class _SendMessageScreenState extends State<SendMessageScreen> {
         );
 
         await _firestoreService.sendMessage(message);
-        
+
         _subjectController.clear();
         _contentController.clear();
-        
+
         _showSuccessDialog('Mensagem enviada com sucesso!');
       }
     } catch (e) {
@@ -262,7 +262,8 @@ class _SendMessageScreenState extends State<SendMessageScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                    onPressed:
+                        _isLoading ? null : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),

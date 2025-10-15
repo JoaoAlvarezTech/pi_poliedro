@@ -76,7 +76,8 @@ class AuthService {
   // Buscar dados do usuário
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
         return doc.data() as Map<String, dynamic>;
       }
@@ -97,7 +98,7 @@ class AuthService {
       Map<String, dynamic> updateData = {
         'updatedAt': FieldValue.serverTimestamp(),
       };
-      
+
       if (name != null) updateData['name'] = name;
       if (phone != null) updateData['phone'] = phone;
       if (studentId != null) updateData['studentId'] = studentId;
@@ -116,6 +117,59 @@ class AuthService {
       throw _handleAuthException(e);
     } catch (e) {
       throw 'Erro inesperado: $e';
+    }
+  }
+
+  // Reautenticar usuário com a senha atual (necessário para atualizar email/senha)
+  Future<void> reauthenticate(String currentPassword) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) {
+        throw 'Usuário não autenticado';
+      }
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Erro ao reautenticar: $e';
+    }
+  }
+
+  // Atualizar email do usuário autenticado
+  Future<void> updateEmail(String newEmail, {String? currentPassword}) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw 'Usuário não autenticado';
+      if (currentPassword != null) {
+        await reauthenticate(currentPassword);
+      }
+      await user.updateEmail(newEmail);
+      await _firestore.collection('users').doc(user.uid).update({
+        'email': newEmail,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Erro ao atualizar email: $e';
+    }
+  }
+
+  // Atualizar senha do usuário autenticado
+  Future<void> updatePassword(String newPassword, {required String currentPassword}) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw 'Usuário não autenticado';
+      await reauthenticate(currentPassword);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Erro ao atualizar senha: $e';
     }
   }
 

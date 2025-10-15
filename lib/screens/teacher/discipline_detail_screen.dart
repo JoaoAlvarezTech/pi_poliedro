@@ -9,6 +9,7 @@ import 'activities_screen.dart';
 import 'materials_screen.dart';
 import 'students_screen.dart';
 import 'submissions_screen.dart';
+import 'student_detail_screen.dart';
 
 class DisciplineDetailScreen extends StatefulWidget {
   final DisciplineModel discipline;
@@ -23,7 +24,7 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
     with SingleTickerProviderStateMixin {
   final FirestoreService _firestoreService = FirestoreService();
   late TabController _tabController;
-  
+
   List<ActivityModel> _activities = [];
   List<MaterialModel> _materials = [];
   List<StudentDisciplineModel> _students = [];
@@ -44,9 +45,12 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
 
   Future<void> _loadDisciplineData() async {
     try {
-      final activities = await _firestoreService.getDisciplineActivities(widget.discipline.id);
-      final materials = await _firestoreService.getDisciplineMaterials(widget.discipline.id);
-      final students = await _firestoreService.getDisciplineStudents(widget.discipline.id);
+      final activities =
+          await _firestoreService.getDisciplineActivities(widget.discipline.id);
+      final materials =
+          await _firestoreService.getDisciplineMaterials(widget.discipline.id);
+      final students =
+          await _firestoreService.getDisciplineStudents(widget.discipline.id);
 
       setState(() {
         _activities = activities;
@@ -102,7 +106,8 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : TabBarView(
@@ -197,7 +202,8 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                               gradient: AppTheme.accentGradient,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.assignment, color: Colors.white),
+                            child: const Icon(Icons.assignment,
+                                color: Colors.white),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -267,21 +273,22 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFEB2E54),
+                  color: AppTheme.primaryColor,
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => MaterialsScreen(discipline: widget.discipline),
+                      builder: (_) =>
+                          MaterialsScreen(discipline: widget.discipline),
                     ),
                   );
                 },
                 icon: const Icon(Icons.add),
                 label: const Text('Novo Material'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A5B5),
+                  backgroundColor: AppTheme.accentColor,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -316,7 +323,8 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: _getMaterialColor(material.type),
-                          child: Icon(_getMaterialIcon(material.type), color: Colors.white),
+                          child: Icon(_getMaterialIcon(material.type),
+                              color: Colors.white),
                         ),
                         title: Text(
                           material.title,
@@ -326,7 +334,8 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(material.description),
-                            Text('Tipo: ${_getMaterialTypeName(material.type)}'),
+                            Text(
+                                'Tipo: ${_getMaterialTypeName(material.type)}'),
                           ],
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios),
@@ -362,21 +371,24 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFEB2E54),
+                  color: AppTheme.primaryColor,
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => StudentsScreen(discipline: widget.discipline),
+                      builder: (_) => StudentsScreen(
+                        discipline: widget.discipline,
+                        openEnrollForm: true,
+                      ),
                     ),
                   );
                 },
                 icon: const Icon(Icons.person_add),
                 label: const Text('Matricular Aluno'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A5B5),
+                  backgroundColor: AppTheme.accentColor,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -410,21 +422,22 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen>
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEB2E54),
+                          backgroundColor: AppTheme.primaryColor,
                           child: Icon(Icons.person, color: Colors.white),
                         ),
                         title: Text(
                           student.studentName,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text('Matriculado em: ${_formatDate(student.enrolledAt)}'),
+                        subtitle: Text(
+                            'Matriculado em: ${_formatDate(student.enrolledAt)}'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => StudentsScreen(
+                              builder: (_) => StudentDetailScreen(
                                 discipline: widget.discipline,
-                                selectedStudent: student,
+                                student: student,
                               ),
                             ),
                           );

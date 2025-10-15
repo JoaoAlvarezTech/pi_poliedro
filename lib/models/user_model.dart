@@ -6,6 +6,7 @@ class UserModel {
   final String? ra; // Registro Acadêmico (apenas para alunos)
   final String? cpf;
   final String? phone;
+  final String? photoUrl;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,6 +19,7 @@ class UserModel {
     this.ra,
     this.cpf,
     this.phone,
+    this.photoUrl,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
@@ -32,6 +34,7 @@ class UserModel {
       ra: map['ra'],
       cpf: map['cpf'],
       phone: map['phone'],
+      photoUrl: map['photoUrl'],
       isActive: map['isActive'] ?? true,
       createdAt: map['createdAt']?.toDate() ?? DateTime.now(),
       updatedAt: map['updatedAt']?.toDate() ?? DateTime.now(),
@@ -47,6 +50,7 @@ class UserModel {
       'ra': ra,
       'cpf': cpf,
       'phone': phone,
+      'photoUrl': photoUrl,
       'isActive': isActive,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -61,6 +65,7 @@ class UserModel {
     String? ra,
     String? cpf,
     String? phone,
+    String? photoUrl,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -73,6 +78,7 @@ class UserModel {
       ra: ra ?? this.ra,
       cpf: cpf ?? this.cpf,
       phone: phone ?? this.phone,
+      photoUrl: photoUrl ?? this.photoUrl,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

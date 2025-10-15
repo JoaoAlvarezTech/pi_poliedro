@@ -46,12 +46,12 @@ class DisciplineModel {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
-    
+
     // Só incluir o ID se não estiver vazio (para updates)
     if (id.isNotEmpty) {
       map['id'] = id;
     }
-    
+
     return map;
   }
 }

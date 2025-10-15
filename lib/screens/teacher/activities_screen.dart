@@ -4,7 +4,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import '../../services/firestore_service.dart';
 import '../../models/discipline_model.dart';
 import '../../models/activity_model.dart';
@@ -31,18 +30,18 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final _formKey = GlobalKey<FormState>();
-  
+
   List<ActivityModel> _activities = [];
   bool _isLoading = true;
   bool _showCreateForm = false;
   bool _isUploading = false;
-  
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _maxGradeController = TextEditingController();
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
-  
+
   // Variáveis para anexo
   String? _selectedFilePath;
   String? _selectedFileName;
@@ -66,7 +65,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
 
   Future<void> _loadActivities() async {
     try {
-      final activities = await _firestoreService.getDisciplineActivities(widget.discipline.id);
+      final activities =
+          await _firestoreService.getDisciplineActivities(widget.discipline.id);
       setState(() {
         _activities = activities;
         _isLoading = false;
@@ -91,7 +91,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       String? attachmentUrl;
       String? attachmentName;
       String? attachmentType;
-      
+
       if (_selectedFilePath != null || _selectedFileBytes != null) {
         attachmentUrl = await _uploadFile();
         attachmentName = _selectedFileName;
@@ -103,7 +103,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         disciplineId: widget.discipline.id,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        weight: double.parse(_weightController.text) / 100, // Converter para decimal
+        weight: double.parse(_weightController.text) /
+            100, // Converter para decimal
         maxGrade: double.parse(_maxGradeController.text),
         dueDate: _dueDate,
         hasAttachment: _selectedFilePath != null || _selectedFileBytes != null,
@@ -115,14 +116,14 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       );
 
       await _firestoreService.createActivity(activity);
-      
+
       _clearForm();
-      
+
       setState(() {
         _showCreateForm = false;
         _isUploading = false;
       });
-      
+
       _loadActivities();
       _showSuccessDialog('Atividade criada com sucesso!');
     } catch (e) {
@@ -151,7 +152,16 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif'],
+        allowedExtensions: [
+          'pdf',
+          'doc',
+          'docx',
+          'txt',
+          'jpg',
+          'jpeg',
+          'png',
+          'gif'
+        ],
       );
 
       if (result != null) {
@@ -179,8 +189,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     }
 
     try {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_$_selectedFileName';
-      final ref = _storage.ref().child('activities/${widget.discipline.id}/$fileName');
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_$_selectedFileName';
+      final ref =
+          _storage.ref().child('activities/${widget.discipline.id}/$fileName');
 
       UploadTask uploadTask;
       if (kIsWeb && _selectedFileBytes != null) {
@@ -304,7 +316,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : Column(
@@ -459,92 +472,94 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
             ),
             const SizedBox(height: 8),
             Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Column(
-                  children: [
-                    if (_selectedFileName == null || (_selectedFilePath == null && _selectedFileBytes == null)) ...[
-                      Row(
-                        children: [
-                          const Icon(Icons.attach_file, color: Color(0xFF00A5B5)),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Nenhum arquivo selecionado',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Column(
+                children: [
+                  if (_selectedFileName == null ||
+                      (_selectedFilePath == null &&
+                          _selectedFileBytes == null)) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.attach_file, color: Color(0xFF00A5B5)),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            'Nenhum arquivo selecionado',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: _selectFile,
-                        icon: const Icon(Icons.upload_file),
-                        label: const Text('Selecionar Arquivo'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00A5B5),
-                          foregroundColor: Colors.white,
                         ),
-                      ),
-                    ] else ...[
-                      Row(
-                        children: [
-                          Icon(
-                            _getFileIcon(_getFileType(_selectedFileName!)),
-                            color: const Color(0xFF00A5B5),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _selectedFileName!,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  'Tipo: ${_getFileType(_selectedFileName!).toUpperCase()}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _selectedFilePath = null;
-                                _selectedFileName = null;
-                                _selectedFileBytes = null;
-                              });
-                            },
-                            icon: const Icon(Icons.close, color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Text(
-                      'Formatos aceitos: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, GIF',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _selectFile,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Selecionar Arquivo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00A5B5),
+                        foregroundColor: Colors.white,
                       ),
                     ),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Icon(
+                          _getFileIcon(_getFileType(_selectedFileName!)),
+                          color: const Color(0xFF00A5B5),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _selectedFileName!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                'Tipo: ${_getFileType(_selectedFileName!).toUpperCase()}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedFilePath = null;
+                              _selectedFileName = null;
+                              _selectedFileBytes = null;
+                            });
+                          },
+                          icon: const Icon(Icons.close, color: Colors.red),
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Formatos aceitos: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, GIF',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -564,7 +579,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               ),
                               SizedBox(width: 8),
@@ -676,7 +692,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppTheme.accentColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -692,7 +709,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -709,7 +727,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                         if (activity.hasAttachment) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: AppTheme.successColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
@@ -717,7 +736,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.attach_file, size: 12, color: AppTheme.successColor),
+                                Icon(Icons.attach_file,
+                                    size: 12, color: AppTheme.successColor),
                                 SizedBox(width: 4),
                                 Text(
                                   'Anexo',
@@ -741,7 +761,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                         color: AppTheme.textSecondary,
                       ),
                     ),
-                    if (activity.hasAttachment && activity.attachmentName != null) ...[
+                    if (activity.hasAttachment &&
+                        activity.attachmentName != null) ...[
                       const SizedBox(height: 8),
                       InkWell(
                         onTap: () => _launchUrl(activity.attachmentUrl!),

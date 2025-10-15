@@ -20,7 +20,7 @@ class TeacherDashboard extends StatefulWidget {
 class _TeacherDashboardState extends State<TeacherDashboard> {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   UserModel? _currentUser;
   List<DisciplineModel> _disciplines = [];
   bool _isLoading = true;
@@ -44,7 +44,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         }
 
         // Buscar disciplinas do professor
-        final disciplines = await _firestoreService.getTeacherDisciplines(user.uid);
+        final disciplines =
+            await _firestoreService.getTeacherDisciplines(user.uid);
 
         setState(() {
           _disciplines = disciplines;
@@ -79,7 +80,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     try {
       await _authService.signOut();
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
       }
     } catch (e) {
       _showErrorDialog('Erro ao fazer logout: $e');
@@ -98,7 +100,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               Container(
                 width: 60,
                 height: 60,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   shape: BoxShape.circle,
                 ),
@@ -128,7 +130,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         slivers: [
           // AppBar personalizado
           _buildSliverAppBar(),
-          
+
           // Conteúdo principal
           SliverToBoxAdapter(
             child: Padding(
@@ -139,7 +141,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   // Seção de disciplinas
                   _buildDisciplinesSection(),
                   const SizedBox(height: 32),
-                  
+
                   // Ações rápidas
                   _buildQuickActions(),
                 ],
@@ -167,18 +169,19 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundImage: _currentUser?.photoUrl != null && _currentUser!.photoUrl!.isNotEmpty
+                        ? NetworkImage(_currentUser!.photoUrl!)
+                        : null,
+                    child: _currentUser?.photoUrl == null || _currentUser!.photoUrl!.isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 24,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -199,7 +202,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         Text(
                           'Bem-vindo, ${(_currentUser?.name ?? 'Professor').split(' ').first}',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -219,7 +222,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -229,12 +232,30 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       ),
                     ),
                   ),
+              IconButton(
+                onPressed: () async {
+                  await Navigator.of(context).pushNamed('/profile');
+                  await _loadDashboardData();
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
                   IconButton(
                     onPressed: _signOut,
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -252,8 +273,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       ),
     );
   }
-
-
 
   Widget _buildDisciplinesSection() {
     return Column(
@@ -281,16 +300,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const DisciplinesScreen(showCreateForm: true),
+                        builder: (_) =>
+                            const DisciplinesScreen(showCreateForm: true),
                       ),
                     );
                   },
                   borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.add, color: Colors.white, size: 18),
                         SizedBox(width: 8),
                         Text(
@@ -352,7 +372,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             ),
           )
         else
-          ..._disciplines.take(3).map((discipline) => _buildModernDisciplineCard(discipline)),
+          ..._disciplines
+              .take(3)
+              .map((discipline) => _buildModernDisciplineCard(discipline)),
         if (_disciplines.length > 3)
           Center(
             child: Padding(
@@ -430,12 +452,13 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.successColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Ativa',
                     style: TextStyle(
                       fontSize: 12,
@@ -530,7 +553,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradient.colors.first.withOpacity(0.3),
+            color: gradient.colors.first.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -550,7 +573,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -587,6 +610,4 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       ),
     );
   }
-
 }
-

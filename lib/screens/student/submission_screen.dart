@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -31,11 +30,11 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final _formKey = GlobalKey<FormState>();
   final _commentsController = TextEditingController();
-  
+
   bool _isLoading = true;
   bool _isSubmitting = false;
   SubmissionModel? _existingSubmission;
-  
+
   // Variáveis para arquivo
   String? _selectedFile;
   String? _fileName;
@@ -55,30 +54,20 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
   Future<void> _loadExistingSubmission() async {
     try {
-      print('DEBUG - Carregando submissão existente para aluno: ${widget.studentId}');
-      print('DEBUG - Atividade ID: ${widget.activity.id}');
-      
       final submission = await _firestoreService.getStudentActivitySubmission(
         widget.studentId,
         widget.activity.id,
       );
-      
-      print('DEBUG - Submissão encontrada: ${submission != null}');
-      if (submission != null) {
-        print('DEBUG - Status da submissão: ${submission.status}');
-        print('DEBUG - Arquivo: ${submission.fileName}');
-      }
-      
+
       setState(() {
         _existingSubmission = submission;
         _isLoading = false;
       });
-      
+
       if (submission != null) {
         _commentsController.text = submission.comments ?? '';
       }
     } catch (e) {
-      print('DEBUG - Erro ao carregar submissão: $e');
       setState(() {
         _isLoading = false;
       });
@@ -88,37 +77,35 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
   Future<void> _pickFile() async {
     try {
-      print('DEBUG - Iniciando seleção de arquivo');
-      
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif'],
+        allowedExtensions: [
+          'pdf',
+          'doc',
+          'docx',
+          'txt',
+          'jpg',
+          'jpeg',
+          'png',
+          'gif'
+        ],
       );
 
       if (result != null) {
-        print('DEBUG - Arquivo selecionado: ${result.files.single.name}');
-        print('DEBUG - Tamanho do arquivo: ${result.files.single.size} bytes');
-        print('DEBUG - Plataforma: ${kIsWeb ? 'Web' : 'Mobile/Desktop'}');
-        
         setState(() {
           _fileName = result.files.single.name;
           if (kIsWeb) {
             // Para web, usar bytes
             _selectedFileBytes = result.files.single.bytes;
             _selectedFile = null;
-            print('DEBUG - Arquivo configurado para web (bytes)');
           } else {
             // Para mobile/desktop, usar path
             _selectedFile = result.files.single.path;
             _selectedFileBytes = null;
-            print('DEBUG - Arquivo configurado para mobile/desktop (path: $_selectedFile)');
           }
         });
-      } else {
-        print('DEBUG - Nenhum arquivo selecionado');
-      }
+      } else {}
     } catch (e) {
-      print('DEBUG - Erro ao selecionar arquivo: $e');
       _showErrorDialog('Erro ao selecionar arquivo: $e');
     }
   }
@@ -130,52 +117,39 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
     try {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_$_fileName';
-      final ref = _storage.ref().child('submissions/${widget.activity.id}/${widget.studentId}/$fileName');
-      
-      print('DEBUG - Iniciando upload do arquivo: $fileName');
-      print('DEBUG - Caminho no storage: submissions/${widget.activity.id}/${widget.studentId}/$fileName');
+      final ref = _storage.ref().child(
+          'submissions/${widget.activity.id}/${widget.studentId}/$fileName');
 
       UploadTask uploadTask;
       if (kIsWeb && _selectedFileBytes != null) {
         // Para web, usar bytes
-        print('DEBUG - Upload para web usando bytes');
         uploadTask = ref.putData(_selectedFileBytes!);
       } else if (_selectedFile != null) {
         // Para mobile/desktop, usar File
-        print('DEBUG - Upload para mobile/desktop usando File');
         uploadTask = ref.putFile(File(_selectedFile!));
       } else {
         throw Exception('Arquivo não encontrado');
       }
 
-      print('DEBUG - Aguardando conclusão do upload...');
       final snapshot = await uploadTask;
-      print('DEBUG - Upload concluído, obtendo URL de download...');
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      print('DEBUG - URL de download obtida: $downloadUrl');
 
       return downloadUrl;
     } catch (e) {
-      print('DEBUG - Erro no upload: $e');
       throw Exception('Erro ao fazer upload: $e');
     }
   }
 
   Future<void> _submitAssignment() async {
-    print('DEBUG - Iniciando envio de tarefa');
-    print('DEBUG - Arquivo selecionado: ${_selectedFile != null || _selectedFileBytes != null}');
-    print('DEBUG - Submissão existente: ${_existingSubmission != null}');
-    print('DEBUG - Nome do arquivo: $_fileName');
-    
     // Validar se há arquivo selecionado ou submissão existente
-    if (_selectedFile == null && _selectedFileBytes == null && _existingSubmission == null) {
-      print('DEBUG - Nenhum arquivo selecionado e nenhuma submissão existente');
+    if (_selectedFile == null &&
+        _selectedFileBytes == null &&
+        _existingSubmission == null) {
       _showErrorDialog('Por favor, selecione um arquivo para enviar');
       return;
     }
 
     try {
-      print('DEBUG - Iniciando processo de envio...');
       setState(() {
         _isSubmitting = true;
       });
@@ -186,64 +160,52 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
       // Se há um novo arquivo selecionado, fazer upload
       if (_selectedFile != null || _selectedFileBytes != null) {
-        print('DEBUG - Fazendo upload de novo arquivo...');
         fileUrl = await _uploadFile();
         fileName = _fileName;
         // Calcular o tamanho do arquivo se necessário
         if (_selectedFileBytes != null) {
           fileSize = _selectedFileBytes!.length;
         }
-        print('DEBUG - Upload concluído. URL: $fileUrl, Nome: $fileName, Tamanho: $fileSize');
       } else if (_existingSubmission != null) {
         // Usar dados da submissão existente
-        print('DEBUG - Usando dados da submissão existente...');
         fileUrl = _existingSubmission!.fileUrl;
         fileName = _existingSubmission!.fileName;
         fileSize = _existingSubmission!.fileSize;
-        print('DEBUG - Dados da submissão existente - URL: $fileUrl, Nome: $fileName, Tamanho: $fileSize');
       }
 
-      print('DEBUG - Criando objeto SubmissionModel...');
       final submission = SubmissionModel(
-        id: _existingSubmission?.id ?? '', // Será gerado automaticamente pelo Firestore se vazio
+        id: _existingSubmission?.id ??
+            '', // Será gerado automaticamente pelo Firestore se vazio
         activityId: widget.activity.id,
         studentId: widget.studentId,
         disciplineId: widget.discipline.id,
         fileUrl: fileUrl,
         fileName: fileName,
         fileSize: fileSize,
-        comments: _commentsController.text.trim().isEmpty ? null : _commentsController.text.trim(),
+        comments: _commentsController.text.trim().isEmpty
+            ? null
+            : _commentsController.text.trim(),
         submittedAt: _existingSubmission?.submittedAt ?? DateTime.now(),
         status: 'submitted',
       );
 
-      print('DEBUG - SubmissionModel criado. ID: ${submission.id}');
-      print('DEBUG - ActivityId: ${submission.activityId}');
-      print('DEBUG - StudentId: ${submission.studentId}');
-      print('DEBUG - DisciplineId: ${submission.disciplineId}');
-
       if (_existingSubmission != null) {
         // Atualizar submissão existente
-        print('DEBUG - Atualizando submissão existente...');
         await _firestoreService.updateSubmission(submission);
         _showSuccessDialog('Submissão atualizada com sucesso!');
       } else {
         // Criar nova submissão
-        print('DEBUG - Criando nova submissão...');
         await _firestoreService.createSubmission(submission);
         _showSuccessDialog('Tarefa enviada com sucesso!');
       }
 
       // Aguardar um pouco antes de fechar para o usuário ver a mensagem de sucesso
-      print('DEBUG - Aguardando antes de fechar a tela...');
       await Future.delayed(const Duration(milliseconds: 500));
-      print('DEBUG - Fechando tela de submissão...');
+      if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
-      print('DEBUG - Erro ao enviar tarefa: $e');
       _showErrorDialog('Erro ao enviar tarefa: $e');
     } finally {
-      print('DEBUG - Finalizando processo de envio...');
       setState(() {
         _isSubmitting = false;
       });
@@ -251,7 +213,6 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
   }
 
   void _showErrorDialog(String message) {
-    print('DEBUG - Mostrando diálogo de erro: $message');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -260,7 +221,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              print('DEBUG - Fechando diálogo de erro');
+              if (!mounted) return;
               Navigator.of(context).pop();
             },
             child: const Text('OK'),
@@ -271,7 +232,6 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
   }
 
   void _showSuccessDialog(String message) {
-    print('DEBUG - Mostrando diálogo de sucesso: $message');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -280,7 +240,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              print('DEBUG - Fechando diálogo de sucesso');
+              if (!mounted) return;
               Navigator.of(context).pop();
             },
             child: const Text('OK'),
@@ -309,7 +269,8 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _buildContent(),
@@ -327,19 +288,19 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
             // Informações da atividade
             _buildActivityInfo(),
             const SizedBox(height: 24),
-            
+
             // Status da submissão
             if (_existingSubmission != null) _buildSubmissionStatus(),
             if (_existingSubmission != null) const SizedBox(height: 24),
-            
+
             // Seleção de arquivo
             _buildFileSelection(),
             const SizedBox(height: 24),
-            
+
             // Comentários
             _buildCommentsSection(),
             const SizedBox(height: 32),
-            
+
             // Botão de envio
             _buildSubmitButton(),
           ],
@@ -350,8 +311,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
   Widget _buildActivityInfo() {
     final isOverdue = DateTime.now().isAfter(widget.activity.dueDate);
-    final daysUntilDue = widget.activity.dueDate.difference(DateTime.now()).inDays;
-    
+    final daysUntilDue =
+        widget.activity.dueDate.difference(DateTime.now()).inDays;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -359,7 +321,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -373,10 +335,10 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.assignment,
                   color: AppTheme.primaryColor,
                   size: 24,
@@ -409,7 +371,8 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getStatusColor(isOverdue, daysUntilDue).withOpacity(0.1),
+                  color: _getStatusColor(isOverdue, daysUntilDue)
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -462,12 +425,12 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _existingSubmission!.status == 'graded' 
-            ? Colors.green.withOpacity(0.1)
-            : Colors.blue.withOpacity(0.1),
+        color: _existingSubmission!.status == 'graded'
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _existingSubmission!.status == 'graded' 
+          color: _existingSubmission!.status == 'graded'
               ? Colors.green
               : Colors.blue,
           width: 1,
@@ -476,10 +439,10 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
       child: Row(
         children: [
           Icon(
-            _existingSubmission!.status == 'graded' 
+            _existingSubmission!.status == 'graded'
                 ? Icons.check_circle
                 : Icons.upload,
-            color: _existingSubmission!.status == 'graded' 
+            color: _existingSubmission!.status == 'graded'
                 ? Colors.green
                 : Colors.blue,
             size: 24,
@@ -490,13 +453,13 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _existingSubmission!.status == 'graded' 
+                  _existingSubmission!.status == 'graded'
                       ? 'Tarefa Avaliada'
                       : 'Tarefa Enviada',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: _existingSubmission!.status == 'graded' 
+                    color: _existingSubmission!.status == 'graded'
                         ? Colors.green
                         : Colors.blue,
                   ),
@@ -536,7 +499,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -554,7 +517,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          if (_selectedFile != null || _selectedFileBytes != null || _existingSubmission != null) ...[
+          if (_selectedFile != null ||
+              _selectedFileBytes != null ||
+              _existingSubmission != null) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -568,7 +533,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _fileName ?? _existingSubmission?.fileName ?? 'Arquivo selecionado',
+                      _fileName ??
+                          _existingSubmission?.fileName ??
+                          'Arquivo selecionado',
                       style: const TextStyle(
                         fontWeight: FontWeight.w500,
                         color: Colors.green,
@@ -689,18 +656,11 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isSubmitting ? null : () {
-          print('DEBUG - Botão de envio pressionado');
-          print('DEBUG - Estado atual: _isSubmitting = $_isSubmitting');
-          print('DEBUG - Arquivo selecionado: ${_selectedFile != null || _selectedFileBytes != null}');
-          print('DEBUG - Submissão existente: ${_existingSubmission != null}');
-          print('DEBUG - Nome do arquivo: $_fileName');
-          print('DEBUG - Comentários: ${_commentsController.text}');
-          print('DEBUG - Activity ID: ${widget.activity.id}');
-          print('DEBUG - Student ID: ${widget.studentId}');
-          print('DEBUG - Discipline ID: ${widget.discipline.id}');
-          _submitAssignment();
-        },
+        onPressed: _isSubmitting
+            ? null
+            : () {
+                _submitAssignment();
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryColor,
           foregroundColor: Colors.white,
@@ -726,7 +686,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                 ],
               )
             : Text(
-                _existingSubmission != null ? 'Atualizar Submissão' : 'Enviar Tarefa',
+                _existingSubmission != null
+                    ? 'Atualizar Submissão'
+                    : 'Enviar Tarefa',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -754,7 +716,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = date.difference(now).inDays;
-    
+
     if (difference == 0) {
       return 'Hoje às ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference == 1) {

@@ -5,6 +5,7 @@ import '../../models/student_discipline_model.dart';
 import '../../models/grade_model.dart';
 import '../../models/activity_model.dart';
 import 'send_message_screen.dart';
+import '../../theme/app_theme.dart';
 
 class StudentDetailScreen extends StatefulWidget {
   final DisciplineModel discipline;
@@ -22,11 +23,12 @@ class StudentDetailScreen extends StatefulWidget {
 
 class _StudentDetailScreenState extends State<StudentDetailScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<GradeModel> _grades = [];
   List<ActivityModel> _activities = [];
   double _average = 0.0;
   bool _isLoading = true;
+  bool _isUnenrolling = false;
 
   @override
   void initState() {
@@ -40,11 +42,11 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         widget.student.studentId,
         widget.discipline.id,
       );
-      
+
       final activities = await _firestoreService.getDisciplineActivities(
         widget.discipline.id,
       );
-      
+
       final average = await _firestoreService.calculateStudentAverage(
         widget.student.studentId,
         widget.discipline.id,
@@ -94,11 +96,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: _isUnenrolling
+                ? null
+                : () {
               Navigator.of(context).pop();
               _unenrollStudent();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
             child: const Text('Desmatricular'),
           ),
         ],
@@ -108,40 +112,63 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
   Future<void> _unenrollStudent() async {
     try {
+      setState(() {
+        _isUnenrolling = true;
+      });
       await _firestoreService.unenrollStudentFromDiscipline(
         widget.student.studentId,
         widget.discipline.id,
       );
-      
+
       // Voltar para a tela anterior após desmatricular
       Navigator.of(context).pop();
-      
+
       // Mostrar mensagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.student.studentName} foi desmatriculado com sucesso!'),
-          backgroundColor: Colors.green,
+          content: Text(
+              '${widget.student.studentName} foi desmatriculado com sucesso!'),
+          backgroundColor: AppTheme.successColor,
         ),
       );
     } catch (e) {
       _showErrorDialog('Erro ao desmatricular aluno: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUnenrolling = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7DDB8),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00A5B5),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         title: Text(widget.student.studentName),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_remove),
-            tooltip: 'Desmatricular',
-            onPressed: () => _showUnenrollDialog(),
-          ),
+          if (_isUnenrolling)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.person_remove),
+              tooltip: 'Desmatricular',
+              onPressed: () => _showUnenrollDialog(),
+            ),
           IconButton(
             icon: const Icon(Icons.message),
             onPressed: () {
@@ -187,7 +214,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFEB2E54),
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -195,7 +222,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               children: [
                 const CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFFEB2E54),
+                  backgroundColor: AppTheme.primaryColor,
                   child: Icon(Icons.person, color: Colors.white, size: 30),
                 ),
                 const SizedBox(width: 16),
@@ -215,14 +242,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                         'Disciplina: ${widget.discipline.name}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.grey,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                       Text(
                         'Matriculado em: ${_formatDate(widget.student.enrolledAt)}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.grey,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                     ],
@@ -247,7 +274,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFEB2E54),
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -297,7 +324,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFFEB2E54),
+            color: AppTheme.primaryColor,
           ),
         ),
         const SizedBox(height: 16),
@@ -329,14 +356,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
   }
 
   Widget _buildGradeCard(GradeModel grade) {
-    final activity = _activities
-        .where((a) => a.id == grade.activityId)
-        .firstOrNull;
-    
+    final activity =
+        _activities.where((a) => a.id == grade.activityId).firstOrNull;
+
     if (activity == null) return const SizedBox.shrink();
 
     final percentage = (grade.grade / activity.maxGrade) * 100;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -386,15 +412,15 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
   }
 
   Color _getAverageColor(double average) {
-    if (average >= 70) return Colors.green;
-    if (average >= 50) return Colors.orange;
-    return Colors.red;
+    if (average >= 70) return AppTheme.successColor;
+    if (average >= 50) return AppTheme.warningColor;
+    return AppTheme.errorColor;
   }
 
   Color _getGradeColor(double percentage) {
-    if (percentage >= 70) return Colors.green;
-    if (percentage >= 50) return Colors.orange;
-    return Colors.red;
+    if (percentage >= 70) return AppTheme.successColor;
+    if (percentage >= 50) return AppTheme.warningColor;
+    return AppTheme.errorColor;
   }
 
   String _getAverageStatus(double average) {

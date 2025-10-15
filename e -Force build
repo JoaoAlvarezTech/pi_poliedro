@@ -1,0 +1,38 @@
+[33mcommit 0bc41b792683fe2741a30376937a2721abf8aad9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: JoaoAlvarezTech <nuke.gota.io@gmail.com>
+Date:   Tue Oct 14 02:08:59 2025 -0300
+
+    Melhora na interface e simplificação nas atividades
+
+ .../chrome-device/Default/BrowsingTopicsState      |   2 [32m+[m[31m-[m
+ .dart_tool/chrome-device/Default/DIPS              | Bin [31m36864[m -> [32m36864[m bytes
+ .dart_tool/chrome-device/Default/Favicons          | Bin [31m36864[m -> [32m98304[m bytes
+ .../chrome-device/Default/GCM Store/000003.log     | Bin [31m1157[m -> [32m1157[m bytes
+ .dart_tool/chrome-device/Default/GCM Store/LOG     |   4 [32m+[m[31m-[m
+ .dart_tool/chrome-device/Default/History           | Bin [31m163840[m -> [32m229376[m bytes
+ .../Default/Local Storage/leveldb/000003.log       | Bin [31m3273[m -> [32m15072[m bytes
+ .../Default/Local Storage/leveldb/LOG              |   6 [32m+[m[31m-[m
+ .../Default/Local Storage/leveldb/LOG.old          |   6 [32m+[m[31m-[m
+ .dart_tool/chrome-device/Default/Login Data        | Bin [31m40960[m -> [32m40960[m bytes
+ .../chrome-device/Default/Network Action Predictor | Bin [31m53248[m -> [32m53248[m bytes
+ .dart_tool/chrome-device/Default/Network/Cookies   | Bin [31m20480[m -> [32m20480[m bytes
+ .../Default/Network/Network Persistent State       |   2 [32m+[m[31m-[m
+ .../Default/Network/Reporting and NEL              | Bin [31m36864[m -> [32m36864[m bytes
+ .../Default/Network/TransportSecurity              |   2 [32m+[m[31m-[m
+ .dart_tool/chrome-device/Default/Preferences       |   2 [32m+[m[31m-[m
+ .../Default/Session Storage/000003.log             | Bin [31m3871[m -> [32m16918[m bytes
+ .../chrome-device/Default/Session Storage/LOG      |   6 [32m+[m[31m-[m
+ .../chrome-device/Default/Session Storage/LOG.old  |   6 [32m+[m[31m-[m
+ .../cache/index-dir/the-real-index                 | Bin [31m48[m -> [32m48[m bytes
+ .../Default/Site Characteristics Database/LOG      |  14 [32m+[m[31m--[m
+ .../Default/Site Characteristics Database/LOG.old  |  14 [32m+[m[31m--[m
+ .dart_tool/chrome-device/Default/Web Data          | Bin [31m141312[m -> [32m141312[m bytes
+ .../chrome-device/Default/WebStorage/QuotaManager  | Bin [31m40960[m -> [32m40960[m bytes
+ .../chrome-device/Default/passkey_enclave_state    |   5 [32m+[m[31m-[m
+ .dart_tool/package_config.json                     |   6 [32m+[m
+ .dart_tool/package_graph.json                      |  27 [32m+++[m[31m--[m
+ .gitignore                                         |  25 [32m++++[m[31m-[m
+ ANDROID_SETUP.md                                   | 121 [31m---------------------[m
+ FIREBASE_SETUP.md                                  |  85 [31m---------------[m
+ build/flutter_assets/NOTICES                       |  31 [32m++++++[m
+ 31 files changed, 113 insertions(+), 251 deletions(-)

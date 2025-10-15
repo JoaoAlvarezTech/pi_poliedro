@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   // Nova paleta de cores - Vibrante e moderna
   static const Color primaryColor = Color(0xFFF2275D); // Rosa vibrante
-  static const Color secondaryColor = Color(0xFFF226E); // Rosa quente
+  static const Color secondaryColor = Color(0x0fff226e); // Rosa quente
   static const Color accentColor = Color(0xFF21BFBF); // Turquesa brilhante
   static const Color backgroundColor = Color(0xFFF2F2F2); // Cinza claro
   static const Color surfaceColor = Colors.white;
@@ -11,37 +11,37 @@ class AppTheme {
   static const Color successColor = Color(0xFF21BFBF); // Turquesa para sucesso
   static const Color warningColor = Color(0xFFF29422); // Laranja para avisos
   static const Color infoColor = Color(0xFF21BFBF); // Turquesa para info
-  
+
   // Cores de texto
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF64748B);
   static const Color textLight = Color(0xFF94A3B8);
-  
+
   // Gradientes simples e limpos
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFF2275D), Color(0xFFF2275D)],
   );
-  
+
   static const LinearGradient secondaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFF21BFBF), Color(0xFF21BFBF)],
   );
-  
+
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFF29422), Color(0xFFF29422)],
   );
-  
+
   static const LinearGradient successGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFF21BFBF), Color(0xFF21BFBF)],
   );
-  
+
   static const LinearGradient warningGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -53,23 +53,21 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      
+
       // Cores do tema
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
         surface: surfaceColor,
-        background: backgroundColor,
         error: errorColor,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onTertiary: Colors.white,
         onSurface: textPrimary,
-        onBackground: textPrimary,
         onError: Colors.white,
       ),
-      
+
       // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryColor,
@@ -82,7 +80,7 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
-      
+
       // Cards
       cardTheme: CardThemeData(
         elevation: 0,
@@ -90,17 +88,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
         ),
         color: surfaceColor,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         surfaceTintColor: Colors.transparent,
       ),
-      
+
       // Botões elevados
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
-          shadowColor: primaryColor.withOpacity(0.2),
+          shadowColor: primaryColor.withValues(alpha: 0.2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -111,7 +109,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Botões de texto
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -122,7 +120,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Campos de texto
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -143,16 +141,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: errorColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        hintStyle: TextStyle(color: textLight),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        hintStyle: const TextStyle(color: textLight),
       ),
-      
+
       // Ícones
       iconTheme: const IconThemeData(
         color: textSecondary,
         size: 24,
       ),
-      
+
       // Tipografia
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -250,7 +249,7 @@ class AppCard extends StatelessWidget {
         borderRadius: borderRadius ?? BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -304,7 +303,8 @@ class AppButton extends StatelessWidget {
           backgroundColor: backgroundColor ?? AppTheme.primaryColor,
           foregroundColor: foregroundColor ?? Colors.white,
           elevation: 0,
-          shadowColor: (backgroundColor ?? AppTheme.primaryColor).withOpacity(0.2),
+          shadowColor:
+              (backgroundColor ?? AppTheme.primaryColor).withValues(alpha: 0.2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -368,7 +368,7 @@ class GradientCard extends StatelessWidget {
         borderRadius: borderRadius ?? BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -25,17 +24,17 @@ class MaterialsScreen extends StatefulWidget {
 class _MaterialsScreenState extends State<MaterialsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseStorage _storage = FirebaseStorage.instance;
-  
+
   List<MaterialModel> _materials = [];
   bool _isLoading = true;
   bool _showCreateForm = false;
   bool _isUploading = false;
-  
+
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _linkController = TextEditingController();
-  
+
   String _selectedType = 'link';
   String? _selectedFile;
   String? _fileName;
@@ -57,7 +56,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   Future<void> _loadMaterials() async {
     try {
-      final materials = await _firestoreService.getDisciplineMaterials(widget.discipline.id);
+      final materials =
+          await _firestoreService.getDisciplineMaterials(widget.discipline.id);
       setState(() {
         _materials = materials;
         _isLoading = false;
@@ -107,8 +107,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       });
 
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_$_fileName';
-      final ref = _storage.ref().child('materials/${widget.discipline.id}/$fileName');
-      
+      final ref =
+          _storage.ref().child('materials/${widget.discipline.id}/$fileName');
+
       UploadTask uploadTask;
       if (kIsWeb && _selectedFileBytes != null) {
         // Para web, usar bytes
@@ -119,10 +120,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       } else {
         throw Exception('Arquivo não encontrado');
       }
-      
+
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       return downloadUrl;
     } catch (e) {
       throw Exception('Erro ao fazer upload: $e');
@@ -165,18 +166,18 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       );
 
       await _firestoreService.createMaterial(material);
-      
+
       _titleController.clear();
       _descriptionController.clear();
       _linkController.clear();
       _selectedFile = null;
       _fileName = null;
-      
+
       setState(() {
         _showCreateForm = false;
         _selectedType = 'link';
       });
-      
+
       _loadMaterials();
       _showSuccessDialog('Material criado com sucesso!');
     } catch (e) {
@@ -442,7 +443,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 const SizedBox(height: 4),
                 Chip(
                   label: Text(_getMaterialTypeName(material.type)),
-                  backgroundColor: _getMaterialColor(material.type).withOpacity(0.1),
+                  backgroundColor:
+                      _getMaterialColor(material.type).withOpacity(0.1),
                 ),
               ],
             ),

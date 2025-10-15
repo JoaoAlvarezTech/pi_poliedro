@@ -11,7 +11,7 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<UserModel> _students = [];
   bool _isLoading = true;
 

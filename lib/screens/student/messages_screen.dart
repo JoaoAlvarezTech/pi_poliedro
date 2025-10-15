@@ -16,7 +16,7 @@ class StudentMessagesScreen extends StatefulWidget {
 class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   UserModel? _currentUser;
   List<UserModel> _conversations = [];
   bool _isLoading = true;
@@ -46,7 +46,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
         return;
       }
 
-      final conversations = await _firestoreService.getUserConversations(user.uid);
+      final conversations =
+          await _firestoreService.getUserConversations(user.uid);
       setState(() {
         _conversations = conversations;
         _isLoading = false;
@@ -58,7 +59,6 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
       _showErrorDialog('Erro ao carregar conversas: $e');
     }
   }
-
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -104,7 +104,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _buildConversationsList(),
@@ -154,13 +155,15 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           onTap: () {
             if (_currentUser != null) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ChatScreen(
-                    otherUser: otherUser,
-                  ),
-                ),
-              ).then((_) => _loadConversations()); // Reload on pop
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(
+                        otherUser: otherUser,
+                      ),
+                    ),
+                  )
+                  .then((_) => _loadConversations()); // Reload on pop
             }
           },
           child: Row(
@@ -193,7 +196,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: otherUser.userType == 'teacher'
                                 ? AppTheme.primaryColor.withOpacity(0.1)
@@ -201,7 +205,9 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            otherUser.userType == 'teacher' ? 'Professor' : 'Aluno',
+                            otherUser.userType == 'teacher'
+                                ? 'Professor'
+                                : 'Aluno',
                             style: TextStyle(
                               fontSize: 12,
                               color: otherUser.userType == 'teacher'
@@ -238,5 +244,4 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
       },
     );
   }
-
 }

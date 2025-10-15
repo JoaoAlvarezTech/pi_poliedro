@@ -66,9 +66,9 @@ class RegistrationTypeScreen extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       const Text(
                         'Escolha o tipo de cadastro',
                         textAlign: TextAlign.center,
@@ -78,9 +78,9 @@ class RegistrationTypeScreen extends StatelessWidget {
                           color: AppTheme.textPrimary,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       Text(
                         'Selecione se você é um aluno ou professor',
                         textAlign: TextAlign.center,
@@ -90,9 +90,9 @@ class RegistrationTypeScreen extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       _RegistrationTypeCard(
                         title: 'Aluno',
                         subtitle: 'Cadastro para estudantes',
@@ -106,9 +106,9 @@ class RegistrationTypeScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       _RegistrationTypeCard(
                         title: 'Professor',
                         subtitle: 'Cadastro para educadores',
@@ -122,9 +122,9 @@ class RegistrationTypeScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         child: const Text(
@@ -234,7 +234,8 @@ class StudentRegistrationScreen extends StatefulWidget {
   const StudentRegistrationScreen({super.key});
 
   @override
-  State<StudentRegistrationScreen> createState() => _StudentRegistrationScreenState();
+  State<StudentRegistrationScreen> createState() =>
+      _StudentRegistrationScreenState();
 }
 
 class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
@@ -244,9 +245,10 @@ class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
   final TextEditingController cpfController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final TextEditingController studentIdController = TextEditingController();
-  
+
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
   bool isLoading = false;
@@ -512,7 +514,8 @@ class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
                     )
                   : const Text(
                       'Cadastrar',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
             ),
           ),
@@ -521,7 +524,8 @@ class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
               'Voltar',
-              style: TextStyle(color: Color(0xFF00A5B5), fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: Color(0xFF00A5B5), fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -548,7 +552,8 @@ class _StudentRegistrationScreenState extends State<StudentRegistrationScreen> {
         prefixIcon: Icon(icon, color: const Color(0xFF00A5B5)),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
           borderSide: BorderSide(color: Colors.grey.shade400),
@@ -629,7 +634,8 @@ class TeacherRegistrationScreen extends StatefulWidget {
   const TeacherRegistrationScreen({super.key});
 
   @override
-  State<TeacherRegistrationScreen> createState() => _TeacherRegistrationScreenState();
+  State<TeacherRegistrationScreen> createState() =>
+      _TeacherRegistrationScreenState();
 }
 
 class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
@@ -639,8 +645,9 @@ class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
   final TextEditingController cpfController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
-  
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
   bool isLoading = false;
@@ -892,7 +899,8 @@ class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
                     )
                   : const Text(
                       'Cadastrar',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
             ),
           ),
@@ -901,7 +909,8 @@ class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
               'Voltar',
-              style: TextStyle(color: Color(0xFF00A5B5), fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: Color(0xFF00A5B5), fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -928,7 +937,8 @@ class _TeacherRegistrationScreenState extends State<TeacherRegistrationScreen> {
         prefixIcon: Icon(icon, color: const Color(0xFF00A5B5)),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
           borderSide: BorderSide(color: Colors.grey.shade400),

@@ -15,7 +15,7 @@ class SelectStudentScreen extends StatefulWidget {
 class _SelectStudentScreenState extends State<SelectStudentScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   List<UserModel> _enrolledStudents = [];
   bool _isLoading = true;
 
@@ -29,7 +29,7 @@ class _SelectStudentScreenState extends State<SelectStudentScreen> {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -43,20 +43,23 @@ class _SelectStudentScreenState extends State<SelectStudentScreen> {
         _showErrorDialog('Dados do usuário atual não encontrados.');
         return;
       }
-      
+
       final currentUser = UserModel.fromMap(userData);
       if (currentUser.userType != 'teacher') {
-        _showErrorDialog('Apenas professores podem acessar esta funcionalidade.');
+        _showErrorDialog(
+            'Apenas professores podem acessar esta funcionalidade.');
         return;
       }
 
       // Buscar disciplinas do professor
-      final disciplines = await _firestoreService.getTeacherDisciplines(user.uid);
-      
+      final disciplines =
+          await _firestoreService.getTeacherDisciplines(user.uid);
+
       // Buscar todos os alunos matriculados nessas disciplinas
       Set<String> studentIds = {};
       for (var discipline in disciplines) {
-        final enrollments = await _firestoreService.getDisciplineStudents(discipline.id);
+        final enrollments =
+            await _firestoreService.getDisciplineStudents(discipline.id);
         for (var enrollment in enrollments) {
           studentIds.add(enrollment.studentId);
         }
@@ -67,9 +70,7 @@ class _SelectStudentScreenState extends State<SelectStudentScreen> {
       for (String studentId in studentIds) {
         final studentData = await _firestoreService.getUser(studentId);
         if (studentData != null) {
-          print('DEBUG - Dados do aluno: $studentData');
           final student = UserModel.fromMap(studentData);
-          print('DEBUG - UserModel criado - uid: ${student.uid}, name: ${student.name}');
           students.add(student);
         }
       }
@@ -129,7 +130,8 @@ class _SelectStudentScreenState extends State<SelectStudentScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _enrolledStudents.isEmpty
@@ -205,9 +207,11 @@ class _SelectStudentScreenState extends State<SelectStudentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.accentColor.withOpacity(0.1),
+                                    color:
+                                        AppTheme.accentColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(

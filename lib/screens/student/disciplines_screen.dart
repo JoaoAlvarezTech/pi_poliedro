@@ -9,12 +9,13 @@ class StudentDisciplinesScreen extends StatefulWidget {
   const StudentDisciplinesScreen({super.key});
 
   @override
-  State<StudentDisciplinesScreen> createState() => _StudentDisciplinesScreenState();
+  State<StudentDisciplinesScreen> createState() =>
+      _StudentDisciplinesScreenState();
 }
 
 class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<DisciplineModel> _disciplines = [];
   bool _isLoading = true;
 
@@ -28,7 +29,8 @@ class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final disciplines = await _firestoreService.getStudentDisciplines(user.uid);
+        final disciplines =
+            await _firestoreService.getStudentDisciplines(user.uid);
         setState(() {
           _disciplines = disciplines;
           _isLoading = false;
@@ -71,7 +73,8 @@ class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _buildDisciplinesList(),
@@ -116,7 +119,8 @@ class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => StudentDisciplineDetailScreen(discipline: discipline),
+                builder: (_) =>
+                    StudentDisciplineDetailScreen(discipline: discipline),
               ),
             );
           },
@@ -184,5 +188,4 @@ class _StudentDisciplinesScreenState extends State<StudentDisciplinesScreen> {
       },
     );
   }
-
 }

@@ -15,14 +15,16 @@ class StudentDisciplineDetailScreen extends StatefulWidget {
   const StudentDisciplineDetailScreen({super.key, required this.discipline});
 
   @override
-  State<StudentDisciplineDetailScreen> createState() => _StudentDisciplineDetailScreenState();
+  State<StudentDisciplineDetailScreen> createState() =>
+      _StudentDisciplineDetailScreenState();
 }
 
-class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailScreen>
+class _StudentDisciplineDetailScreenState
+    extends State<StudentDisciplineDetailScreen>
     with SingleTickerProviderStateMixin {
   final FirestoreService _firestoreService = FirestoreService();
   late TabController _tabController;
-  
+
   List<ActivityModel> _activities = [];
   List<MaterialModel> _materials = [];
   List<GradeModel> _grades = [];
@@ -47,10 +49,14 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final activities = await _firestoreService.getDisciplineActivities(widget.discipline.id);
-      final materials = await _firestoreService.getDisciplineMaterials(widget.discipline.id);
-      final grades = await _firestoreService.getStudentGrades(user.uid, widget.discipline.id);
-      final average = await _firestoreService.calculateStudentAverage(user.uid, widget.discipline.id);
+      final activities =
+          await _firestoreService.getDisciplineActivities(widget.discipline.id);
+      final materials =
+          await _firestoreService.getDisciplineMaterials(widget.discipline.id);
+      final grades = await _firestoreService.getStudentGrades(
+          user.uid, widget.discipline.id);
+      final average = await _firestoreService.calculateStudentAverage(
+          user.uid, widget.discipline.id);
 
       setState(() {
         _activities = activities;
@@ -107,7 +113,8 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : TabBarView(
@@ -188,7 +195,8 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                               gradient: AppTheme.accentGradient,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.assignment, color: Colors.white),
+                            child: const Icon(Icons.assignment,
+                                color: Colors.white),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -292,7 +300,8 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => StudentMaterialsScreen(discipline: widget.discipline),
+                            builder: (_) => StudentMaterialsScreen(
+                                discipline: widget.discipline),
                           ),
                         );
                       },
@@ -305,7 +314,8 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                               gradient: AppTheme.primaryGradient,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.folder, color: Colors.white),
+                            child:
+                                const Icon(Icons.folder, color: Colors.white),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -365,11 +375,11 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
           // Card de média geral
           _buildAverageCard(),
           const SizedBox(height: 20),
-          
+
           // Estatísticas rápidas
           _buildStatsCards(),
           const SizedBox(height: 20),
-          
+
           // Lista de notas
           _buildGradesList(),
         ],
@@ -441,7 +451,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
     final totalActivities = _activities.length;
     final gradedActivities = _grades.length;
     final pendingActivities = totalActivities - gradedActivities;
-    
+
     return Row(
       children: [
         Expanded(
@@ -455,7 +465,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                     color: AppTheme.successColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.check_circle,
                     color: AppTheme.successColor,
                     size: 20,
@@ -494,7 +504,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                     color: AppTheme.warningColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.pending,
                     color: AppTheme.warningColor,
                     size: 20,
@@ -533,7 +543,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                     color: AppTheme.accentColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.assignment,
                     color: AppTheme.accentColor,
                     size: 20,
@@ -635,7 +645,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
               updatedAt: DateTime.now(),
             ),
           );
-          
+
           return AppCard(
             margin: const EdgeInsets.only(bottom: 12),
             child: Row(
@@ -669,7 +679,8 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                             'Nota: ${grade.grade.toStringAsFixed(1)}',
                             style: TextStyle(
                               fontSize: 14,
-                              color: _getGradeColor(grade.grade, activity.maxGrade),
+                              color: _getGradeColor(
+                                  grade.grade, activity.maxGrade),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -691,7 +702,8 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
                           color: AppTheme.textSecondary,
                         ),
                       ),
-                      if (grade.comments != null && grade.comments!.isNotEmpty) ...[
+                      if (grade.comments != null &&
+                          grade.comments!.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -715,7 +727,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -726,7 +738,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
     } else if (_average >= 5.0) {
       return AppTheme.warningGradient;
     } else {
-      return LinearGradient(
+      return const LinearGradient(
         colors: [AppTheme.errorColor, AppTheme.errorColor],
       );
     }
@@ -759,7 +771,7 @@ class _StudentDisciplineDetailScreenState extends State<StudentDisciplineDetailS
     } else if (percentage >= 0.5) {
       return AppTheme.warningGradient;
     } else {
-      return LinearGradient(
+      return const LinearGradient(
         colors: [AppTheme.errorColor, AppTheme.errorColor],
       );
     }

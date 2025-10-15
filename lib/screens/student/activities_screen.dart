@@ -13,12 +13,13 @@ class StudentActivitiesScreen extends StatefulWidget {
   const StudentActivitiesScreen({super.key, required this.discipline});
 
   @override
-  State<StudentActivitiesScreen> createState() => _StudentActivitiesScreenState();
+  State<StudentActivitiesScreen> createState() =>
+      _StudentActivitiesScreenState();
 }
 
 class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<ActivityModel> _activities = [];
   bool _isLoading = true;
 
@@ -30,7 +31,8 @@ class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
 
   Future<void> _loadActivities() async {
     try {
-      final activities = await _firestoreService.getDisciplineActivities(widget.discipline.id);
+      final activities =
+          await _firestoreService.getDisciplineActivities(widget.discipline.id);
       setState(() {
         _activities = activities;
         _isLoading = false;
@@ -108,7 +110,8 @@ class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _buildContent(),
@@ -173,7 +176,7 @@ class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
   Widget _buildActivityCard(ActivityModel activity) {
     final isOverdue = DateTime.now().isAfter(activity.dueDate);
     final daysUntilDue = activity.dueDate.difference(DateTime.now()).inDays;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -235,9 +238,11 @@ class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(isOverdue, daysUntilDue).withOpacity(0.1),
+                      color: _getStatusColor(isOverdue, daysUntilDue)
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -308,7 +313,8 @@ class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                         ),
                       ),
                     ],
@@ -344,7 +350,7 @@ class _StudentActivitiesScreenState extends State<StudentActivitiesScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = date.difference(now).inDays;
-    
+
     if (difference == 0) {
       return 'Hoje às ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference == 1) {

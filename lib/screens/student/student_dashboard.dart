@@ -23,7 +23,7 @@ class StudentDashboard extends StatefulWidget {
 class _StudentDashboardState extends State<StudentDashboard> {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   UserModel? _currentUser;
   List<DisciplineModel> _disciplines = [];
   List<MessageModel> _messages = [];
@@ -39,32 +39,29 @@ class _StudentDashboardState extends State<StudentDashboard> {
   Future<void> _loadDashboardData() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      print('DEBUG - Usuário atual: ${user?.uid}');
-      
+
       if (user != null) {
         // Buscar dados do usuário
         final userData = await _firestoreService.getUser(user.uid);
-        print('DEBUG - Dados do usuário: $userData');
-        
+
         if (userData != null) {
           setState(() {
             _currentUser = UserModel.fromMap(userData);
           });
-          print('DEBUG - Usuário carregado: ${_currentUser?.name} (${_currentUser?.userType})');
         }
 
         // Buscar disciplinas do aluno
-        print('DEBUG - Buscando disciplinas para o aluno: ${user.uid}');
-        final disciplines = await _firestoreService.getStudentDisciplines(user.uid);
-        print('DEBUG - Disciplinas encontradas: ${disciplines.length}');
-        
+        final disciplines =
+            await _firestoreService.getStudentDisciplines(user.uid);
+
         // Buscar mensagens
         final messages = await _firestoreService.getStudentMessages(user.uid);
 
         // Buscar próximas atividades
         List<ActivityModel> upcomingActivities = [];
         for (var discipline in disciplines) {
-          final activities = await _firestoreService.getDisciplineActivities(discipline.id);
+          final activities =
+              await _firestoreService.getDisciplineActivities(discipline.id);
           // Filtrar atividades com prazo nos próximos 7 dias
           final now = DateTime.now();
           final upcoming = activities.where((activity) {
@@ -83,13 +80,11 @@ class _StudentDashboardState extends State<StudentDashboard> {
           _isLoading = false;
         });
       } else {
-        print('DEBUG - Usuário não autenticado');
         setState(() {
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('DEBUG - Erro no dashboard: $e');
       setState(() {
         _isLoading = false;
       });
@@ -117,7 +112,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
     try {
       await _authService.signOut();
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
       }
     } catch (e) {
       _showErrorDialog('Erro ao fazer logout: $e');
@@ -136,7 +132,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
               Container(
                 width: 60,
                 height: 60,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   shape: BoxShape.circle,
                 ),
@@ -166,7 +162,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
         slivers: [
           // AppBar personalizado
           _buildSliverAppBar(),
-          
+
           // Conteúdo principal
           SliverToBoxAdapter(
             child: Padding(
@@ -177,11 +173,11 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   // Seção de disciplinas
                   _buildDisciplinesSection(),
                   const SizedBox(height: 32),
-                  
+
                   // Seção de próximas tarefas
                   _buildUpcomingTasksSection(),
                   const SizedBox(height: 32),
-                  
+
                   // Seção de mensagens
                   _buildMessagesSection(),
                 ],
@@ -209,18 +205,19 @@ class _StudentDashboardState extends State<StudentDashboard> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.school,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundImage: _currentUser?.photoUrl != null && _currentUser!.photoUrl!.isNotEmpty
+                        ? NetworkImage(_currentUser!.photoUrl!)
+                        : null,
+                    child: _currentUser?.photoUrl == null || _currentUser!.photoUrl!.isEmpty
+                        ? const Icon(
+                            Icons.school,
+                            color: Colors.white,
+                            size: 24,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -241,7 +238,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                         Text(
                           'Bem-vindo, ${(_currentUser?.name ?? 'Aluno').split(' ').first}',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -261,7 +258,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -271,12 +268,31 @@ class _StudentDashboardState extends State<StudentDashboard> {
                       ),
                     ),
                   ),
+              IconButton(
+                onPressed: () async {
+                  await Navigator.of(context).pushNamed('/profile');
+                  // Reload after returning from profile
+                  await _loadDashboardData();
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
                   IconButton(
                     onPressed: _signOut,
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -294,8 +310,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
     );
   }
-
-
 
   Widget _buildDisciplinesSection() {
     return Column(
@@ -375,7 +389,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           )
         else
-          ..._disciplines.take(3).map((discipline) => _buildModernDisciplineCard(discipline)),
+          ..._disciplines
+              .take(3)
+              .map((discipline) => _buildModernDisciplineCard(discipline)),
       ],
     );
   }
@@ -386,7 +402,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => StudentDisciplineDetailScreen(discipline: discipline),
+            builder: (_) =>
+                StudentDisciplineDetailScreen(discipline: discipline),
           ),
         );
       },
@@ -429,12 +446,13 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.successColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Matriculado',
                     style: TextStyle(
                       fontSize: 12,
@@ -541,7 +559,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           )
         else
-          ..._messages.take(3).map((message) => _buildModernMessageCard(message)),
+          ..._messages
+              .take(3)
+              .map((message) => _buildModernMessageCard(message)),
       ],
     );
   }
@@ -562,9 +582,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              gradient: message.isRead ? 
-                LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500]) :
-                AppTheme.secondaryGradient,
+              gradient: message.isRead
+                  ? LinearGradient(
+                      colors: [Colors.grey.shade400, Colors.grey.shade500])
+                  : AppTheme.secondaryGradient,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
@@ -582,7 +603,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   message.subject,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: message.isRead ? FontWeight.w500 : FontWeight.w700,
+                    fontWeight:
+                        message.isRead ? FontWeight.w500 : FontWeight.w700,
                     color: AppTheme.textPrimary,
                   ),
                 ),
@@ -708,12 +730,13 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 updatedAt: DateTime.now(),
               ),
             );
-            
-            final daysUntilDue = activity.dueDate.difference(DateTime.now()).inDays;
+
+            final daysUntilDue =
+                activity.dueDate.difference(DateTime.now()).inDays;
             final isOverdue = daysUntilDue < 0;
             final isDueToday = daysUntilDue == 0;
             final isDueTomorrow = daysUntilDue == 1;
-            
+
             String dueText;
             Color dueColor;
             if (isOverdue) {
@@ -729,7 +752,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
               dueText = 'Vence em $daysUntilDue dias';
               dueColor = AppTheme.textSecondary;
             }
-            
+
             return AppCard(
               margin: const EdgeInsets.only(bottom: 12),
               onTap: () {
@@ -752,9 +775,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      gradient: isOverdue || isDueToday 
-                          ? LinearGradient(
-                              colors: [AppTheme.errorColor, AppTheme.errorColor],
+                      gradient: isOverdue || isDueToday
+                          ? const LinearGradient(
+                              colors: [
+                                AppTheme.errorColor,
+                                AppTheme.errorColor
+                              ],
                             )
                           : AppTheme.accentGradient,
                       borderRadius: BorderRadius.circular(12),
@@ -812,7 +838,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 ],
               ),
             );
-          }).toList(),
+          }),
       ],
     );
   }

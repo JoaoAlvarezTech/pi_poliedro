@@ -49,12 +49,6 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) return;
 
-    print('DEBUG - Enviando mensagem:');
-    print('DEBUG - currentUserId: $currentUserId');
-    print('DEBUG - otherUser.uid: ${widget.otherUser.uid}');
-    print('DEBUG - otherUser.name: ${widget.otherUser.name}');
-    print('DEBUG - Conteúdo: ${_messageController.text.trim()}');
-
     final message = ChatMessageModel(
       id: '',
       senderId: currentUserId,
@@ -103,7 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
@@ -136,7 +130,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 Text(
-                  widget.otherUser.userType == 'teacher' ? 'Professor' : 'Aluno',
+                  widget.otherUser.userType == 'teacher'
+                      ? 'Professor'
+                      : 'Aluno',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withOpacity(0.8),
@@ -166,13 +162,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                AppTheme.primaryColor),
                           ),
                         );
                       }
                       if (snapshot.hasError) {
                         return Center(
-                          child: Text('Erro ao carregar mensagens: ${snapshot.error}'),
+                          child: Text(
+                              'Erro ao carregar mensagens: ${snapshot.error}'),
                         );
                       }
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -185,7 +183,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       }
 
                       final messages = snapshot.data!;
-                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _scrollToBottom());
 
                       return ListView.builder(
                         controller: _scrollController,
@@ -195,23 +194,35 @@ class _ChatScreenState extends State<ChatScreen> {
                           final message = messages[index];
                           final isMe = message.senderId == currentUserId;
                           final bool showDateSeparator = index == 0 ||
-                              !_isSameDay(messages[index - 1].timestamp, message.timestamp);
+                              !_isSameDay(messages[index - 1].timestamp,
+                                  message.timestamp);
 
                           return Column(
                             children: [
-                              if (showDateSeparator) _buildDateSeparator(message.timestamp),
+                              if (showDateSeparator)
+                                _buildDateSeparator(message.timestamp),
                               Align(
-                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                alignment: isMe
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
                                 child: Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: isMe ? AppTheme.primaryColor : Colors.white,
+                                    color: isMe
+                                        ? AppTheme.primaryColor
+                                        : Colors.white,
                                     borderRadius: BorderRadius.only(
                                       topLeft: const Radius.circular(16),
                                       topRight: const Radius.circular(16),
-                                      bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(4),
-                                      bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(16),
+                                      bottomLeft: isMe
+                                          ? const Radius.circular(16)
+                                          : const Radius.circular(4),
+                                      bottomRight: isMe
+                                          ? const Radius.circular(4)
+                                          : const Radius.circular(16),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
@@ -222,20 +233,27 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ],
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                    crossAxisAlignment: isMe
+                                        ? CrossAxisAlignment.end
+                                        : CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         message.content,
                                         style: TextStyle(
-                                          color: isMe ? Colors.white : AppTheme.textPrimary,
+                                          color: isMe
+                                              ? Colors.white
+                                              : AppTheme.textPrimary,
                                           fontSize: 15,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        DateFormat('HH:mm').format(message.timestamp),
+                                        DateFormat('HH:mm')
+                                            .format(message.timestamp),
                                         style: TextStyle(
-                                          color: isMe ? Colors.white.withOpacity(0.7) : AppTheme.textSecondary,
+                                          color: isMe
+                                              ? Colors.white.withOpacity(0.7)
+                                              : AppTheme.textSecondary,
                                           fontSize: 10,
                                         ),
                                       ),
@@ -282,7 +300,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 filled: true,
                 fillColor: AppTheme.backgroundColor,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               maxLines: null, // Allow multiple lines
               keyboardType: TextInputType.multiline,

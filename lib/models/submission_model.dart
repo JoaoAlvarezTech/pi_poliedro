@@ -42,8 +42,8 @@ class SubmissionModel {
       grade: map['grade']?.toDouble(),
       teacherComments: map['teacherComments'],
       submittedAt: (map['submittedAt'] as dynamic).toDate(),
-      gradedAt: map['gradedAt'] != null 
-          ? (map['gradedAt'] as dynamic).toDate() 
+      gradedAt: map['gradedAt'] != null
+          ? (map['gradedAt'] as dynamic).toDate()
           : null,
       status: map['status'] ?? 'submitted',
     );

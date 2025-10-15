@@ -8,8 +8,9 @@ import 'discipline_detail_screen.dart';
 class DisciplinesScreen extends StatefulWidget {
   final DisciplineModel? selectedDiscipline;
   final bool showCreateForm;
-  
-  const DisciplinesScreen({super.key, this.selectedDiscipline, this.showCreateForm = false});
+
+  const DisciplinesScreen(
+      {super.key, this.selectedDiscipline, this.showCreateForm = false});
 
   @override
   State<DisciplinesScreen> createState() => _DisciplinesScreenState();
@@ -18,11 +19,11 @@ class DisciplinesScreen extends StatefulWidget {
 class _DisciplinesScreenState extends State<DisciplinesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final _formKey = GlobalKey<FormState>();
-  
+
   List<DisciplineModel> _disciplines = [];
   bool _isLoading = true;
   bool _showCreateForm = false;
-  
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
@@ -46,7 +47,8 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final disciplines = await _firestoreService.getTeacherDisciplines(user.uid);
+        final disciplines =
+            await _firestoreService.getTeacherDisciplines(user.uid);
         setState(() {
           _disciplines = disciplines;
           _isLoading = false;
@@ -69,7 +71,7 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
         // Buscar dados do professor no Firestore
         final userData = await _firestoreService.getUser(user.uid);
         final teacherName = userData?['name'] ?? 'Professor';
-        
+
         final discipline = DisciplineModel(
           id: '', // Será gerado pelo Firestore
           name: _nameController.text.trim(),
@@ -82,15 +84,15 @@ class _DisciplinesScreenState extends State<DisciplinesScreen> {
         );
 
         await _firestoreService.createDiscipline(discipline);
-        
+
         _nameController.clear();
         _descriptionController.clear();
         _codeController.clear();
-        
+
         setState(() {
           _showCreateForm = false;
         });
-        
+
         _loadDisciplines();
         _showSuccessDialog('Disciplina criada com sucesso!');
       }

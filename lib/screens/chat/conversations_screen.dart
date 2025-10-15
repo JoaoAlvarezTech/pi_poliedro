@@ -15,7 +15,7 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<UserModel> _conversations = [];
   bool _isLoading = true;
   String? _currentUserId;
@@ -31,7 +31,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     try {
       if (_currentUserId == null) return;
 
-      final conversations = await _firestoreService.getUserConversations(_currentUserId!);
+      final conversations =
+          await _firestoreService.getUserConversations(_currentUserId!);
 
       setState(() {
         _conversations = conversations;
@@ -106,7 +107,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             )
           : _conversations.isEmpty
@@ -152,11 +154,11 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                         children: [
                           CircleAvatar(
                             radius: 25,
-                            backgroundColor: user.userType == 'teacher' 
-                                ? AppTheme.primaryColor 
+                            backgroundColor: user.userType == 'teacher'
+                                ? AppTheme.primaryColor
                                 : AppTheme.accentColor,
                             child: Text(
-                              user.name.isNotEmpty 
+                              user.name.isNotEmpty
                                   ? user.name[0].toUpperCase()
                                   : '?',
                               style: const TextStyle(
@@ -183,18 +185,23 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: user.userType == 'teacher' 
-                                            ? AppTheme.primaryColor.withOpacity(0.1)
-                                            : AppTheme.accentColor.withOpacity(0.1),
+                                        color: user.userType == 'teacher'
+                                            ? AppTheme.primaryColor
+                                                .withOpacity(0.1)
+                                            : AppTheme.accentColor
+                                                .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        user.userType == 'teacher' ? 'Professor' : 'Aluno',
+                                        user.userType == 'teacher'
+                                            ? 'Professor'
+                                            : 'Aluno',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: user.userType == 'teacher' 
+                                          color: user.userType == 'teacher'
                                               ? AppTheme.primaryColor
                                               : AppTheme.accentColor,
                                           fontWeight: FontWeight.w500,

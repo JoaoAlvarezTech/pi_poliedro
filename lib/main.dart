@@ -6,6 +6,7 @@ import 'services/auth_service.dart';
 import 'screens/teacher/teacher_dashboard.dart';
 import 'screens/student/student_dashboard.dart';
 import 'theme/app_theme.dart';
+import 'screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,7 @@ class PortalPoliedroApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/teacher': (context) => const TeacherDashboard(),
         '/student': (context) => const StudentDashboard(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
@@ -43,13 +45,14 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with TickerProviderStateMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   Canal canalSelecionado = Canal.aluno;
   bool isLoading = false;
-  
+
   late AnimationController _logoController;
   late AnimationController _formController;
   late Animation<double> _logoAnimation;
@@ -67,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _logoAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -75,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       parent: _logoController,
       curve: Curves.easeOut,
     ));
-    
+
     _formAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -83,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       parent: _formController,
       curve: Curves.easeOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -91,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       parent: _formController,
       curve: Curves.easeOut,
     ));
-    
+
     _logoController.forward();
     Future.delayed(const Duration(milliseconds: 300), () {
       _formController.forward();
@@ -122,15 +125,17 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-      
-          // Login bem-sucedido - navegar para a tela principal
-          if (mounted) {
-            if (canalSelecionado == Canal.aluno) {
-              Navigator.of(context).pushNamedAndRemoveUntil('/student', (route) => false);
-            } else {
-              Navigator.of(context).pushNamedAndRemoveUntil('/teacher', (route) => false);
-            }
-          }
+
+      // Login bem-sucedido - navegar para a tela principal
+      if (mounted) {
+        if (canalSelecionado == Canal.aluno) {
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/student', (route) => false);
+        } else {
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/teacher', (route) => false);
+        }
+      }
     } catch (e) {
       if (mounted) {
         _showErrorDialog(e.toString());
@@ -187,21 +192,21 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Logo animado
-                        AnimatedBuilder(
-                          animation: _logoAnimation,
-                          builder: (context, child) {
-                            return Transform.scale(
-                              scale: _logoAnimation.value.clamp(0.0, 1.0),
-                              child: Opacity(
-                                opacity: _logoAnimation.value.clamp(0.0, 1.0),
-                                child: const _AnimatedLogo(),
-                              ),
-                            );
-                          },
-                        ),
-                    
+                    AnimatedBuilder(
+                      animation: _logoAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _logoAnimation.value.clamp(0.0, 1.0),
+                          child: Opacity(
+                            opacity: _logoAnimation.value.clamp(0.0, 1.0),
+                            child: const _AnimatedLogo(),
+                          ),
+                        );
+                      },
+                    ),
+
                     const SizedBox(height: 32),
-                    
+
                     // Formulário animado
                     SlideTransition(
                       position: _slideAnimation,
@@ -226,11 +231,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Widget _buildLoginForm(bool isAluno) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+        color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -253,11 +258,13 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 letterSpacing: 1.2,
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             Text(
-              isAluno ? 'Acesse suas disciplinas e notas' : 'Gerencie suas turmas e conteúdos',
+              isAluno
+                  ? 'Acesse suas disciplinas e notas'
+                  : 'Gerencie suas turmas e conteúdos',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -265,9 +272,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 fontWeight: FontWeight.w500,
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Toggle de tipo de usuário
             Container(
               decoration: BoxDecoration(
@@ -295,9 +302,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Campos de entrada
             _buildModernInput(
               controller: emailController,
@@ -305,18 +312,18 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             _buildModernInput(
               controller: passwordController,
               hintText: 'Senha',
               icon: Icons.lock_outline,
               obscureText: true,
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Link de recuperação de senha
             Align(
               alignment: Alignment.centerRight,
@@ -337,9 +344,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Botão de login
             AppButton(
               text: 'Entrar',
@@ -348,9 +355,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               backgroundColor: const Color(0xFF21BFBF),
               height: 52,
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Link de cadastro
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -381,9 +388,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Botão de alternância rápida
             if (isAluno)
               TextButton.icon(
@@ -406,7 +413,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildToggleButton(String text, bool isSelected, IconData icon, VoidCallback onTap) {
+  Widget _buildToggleButton(
+      String text, bool isSelected, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -472,7 +480,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             size: 22,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
       ),
     );
@@ -486,7 +495,8 @@ class _AnimatedLogo extends StatefulWidget {
   State<_AnimatedLogo> createState() => _AnimatedLogoState();
 }
 
-class _AnimatedLogoState extends State<_AnimatedLogo> with TickerProviderStateMixin {
+class _AnimatedLogoState extends State<_AnimatedLogo>
+    with TickerProviderStateMixin {
   late AnimationController _rotationController;
   late AnimationController _pulseController;
   late Animation<double> _rotationAnimation;
@@ -550,7 +560,7 @@ class _AnimatedLogoState extends State<_AnimatedLogo> with TickerProviderStateMi
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF2275D).withOpacity(0.3),
+                        color: const Color(0xFFF2275D).withValues(alpha: 0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -597,7 +607,6 @@ class _AnimatedLogoState extends State<_AnimatedLogo> with TickerProviderStateMi
     );
   }
 }
-
 
 class PlaceholderHome extends StatelessWidget {
   final String title;
@@ -698,11 +707,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -737,7 +746,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF21BFBF).withOpacity(0.3),
+                  color: const Color(0xFF21BFBF).withValues(alpha: 0.3),
                   blurRadius: 15,
                   spreadRadius: 3,
                 ),
@@ -749,9 +758,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               color: Colors.white,
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           const Text(
             'Recuperar Senha',
             textAlign: TextAlign.center,
@@ -761,9 +770,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               color: Color(0xFFEB2E54),
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           Text(
             'Digite seu e-mail para receber um link de recuperação de senha',
             textAlign: TextAlign.center,
@@ -773,9 +782,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Campo de email moderno
           Container(
             decoration: BoxDecoration(
@@ -802,7 +811,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   size: 22,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -815,9 +825,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               },
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Botão de envio
           AppButton(
             text: 'Enviar Link de Recuperação',
@@ -826,9 +836,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             backgroundColor: const Color(0xFF00A5B5),
             height: 52,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Botão de voltar
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -859,7 +869,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF21BFBF).withOpacity(0.3),
+                color: const Color(0xFF21BFBF).withValues(alpha: 0.3),
                 blurRadius: 15,
                 spreadRadius: 3,
               ),
@@ -871,9 +881,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             color: Colors.white,
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         const Text(
           'E-mail Enviado!',
           textAlign: TextAlign.center,
@@ -883,9 +893,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             color: Color(0xFFEB2E54),
           ),
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         Text(
           'Enviamos um link de recuperação para:',
           textAlign: TextAlign.center,
@@ -895,9 +905,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -909,13 +919,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-                  color: Color(0xFF21BFBF),
+              color: Color(0xFF21BFBF),
             ),
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         Text(
           'Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.',
           textAlign: TextAlign.center,
@@ -925,9 +935,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        
+
         const SizedBox(height: 32),
-        
+
         // Botão principal
         AppButton(
           text: 'Voltar ao Login',
@@ -935,9 +945,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           backgroundColor: const Color(0xFF00A5B5),
           height: 52,
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Botão secundário
         TextButton(
           onPressed: () {
@@ -949,7 +959,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: const Text(
             'Enviar para outro e-mail',
             style: TextStyle(
-                  color: Color(0xFF21BFBF),
+              color: Color(0xFF21BFBF),
               fontWeight: FontWeight.w600,
               fontSize: 16,
             ),
@@ -959,4 +969,3 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-
