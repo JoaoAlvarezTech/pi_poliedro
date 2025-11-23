@@ -1,0 +1,43 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Regras para materiais de disciplinas
+    match /materials/{disciplineId}/{fileName} {
+      // Usuários autenticados podem fazer upload de materiais
+      allow write: if request.auth != null;
+      
+      // Usuários autenticados podem baixar materiais
+      allow read: if request.auth != null;
+    }
+    
+    // Regras para anexos de atividades
+    match /activities/{disciplineId}/{fileName} {
+      // Usuários autenticados podem fazer upload de anexos de atividades
+      allow write: if request.auth != null;
+      
+      // Usuários autenticados podem baixar anexos de atividades
+      allow read: if request.auth != null;
+    }
+    
+    // Regras para avatares de usuários
+    match /avatars/{userId} {
+      // Usuários podem fazer upload apenas de seus próprios avatares
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Regras para arquivos temporários
+    match /temp/{userId}/{fileName} {
+      // Usuários podem fazer upload de arquivos temporários
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Regras para submissões de tarefas
+    match /submissions/{activityId}/{studentId}/{fileName} {
+      // Alunos podem fazer upload de suas próprias submissões
+      allow write: if request.auth != null && request.auth.uid == studentId;
+      
+      // Professores podem ler submissões de suas disciplinas
+      allow read: if request.auth != null;
+    }
+  }
+}

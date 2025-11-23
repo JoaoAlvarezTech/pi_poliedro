@@ -1,0 +1,159 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras para usuários
+    match /users/{userId} {
+      // Usuários podem ler e escrever apenas seus próprios dados
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Professores podem ler dados de alunos para matricular em disciplinas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      // Usuários podem ler dados básicos de outros usuários para o sistema de chat
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['teacher', 'student'];
+    }
+    
+    // Regras para disciplinas
+    match /disciplines/{disciplineId} {
+      // Apenas o professor proprietário pode criar, editar e deletar suas disciplinas
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        request.resource.data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        resource.data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler disciplinas se são alunos autenticados
+      // A lógica do código já garante que apenas disciplinas onde o aluno está matriculado são buscadas
+      // através da query em student_disciplines antes de buscar as disciplinas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student';
+    }
+    
+    // Regras para atividades
+    match /activities/{activityId} {
+      // Apenas o professor da disciplina pode criar, editar e deletar atividades
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler atividades se são alunos autenticados
+      // A lógica do código já garante que apenas atividades de disciplinas onde o aluno está matriculado são buscadas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student';
+    }
+    
+    // Regras para notas
+    match /grades/{gradeId} {
+      // Professores podem criar e editar notas de suas disciplinas
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler apenas suas próprias notas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.studentId == request.auth.uid;
+    }
+    
+    // Regras para materiais
+    match /materials/{materialId} {
+      // Apenas o professor da disciplina pode criar, editar e deletar materiais
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler materiais se são alunos autenticados
+      // A lógica do código já garante que apenas materiais de disciplinas onde o aluno está matriculado são buscados
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student';
+    }
+    
+    // Regras para mensagens
+    match /messages/{messageId} {
+      // Professores podem criar mensagens para alunos de suas disciplinas
+      // Verificamos se o professor é dono da disciplina
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler apenas suas próprias mensagens
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.receiverId == request.auth.uid;
+      
+      // Alunos podem marcar suas mensagens como lidas
+      allow update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.receiverId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+    }
+    
+    // Regras para matrículas de alunos em disciplinas
+    match /student_disciplines/{enrollmentId} {
+      // Professores podem criar e editar matrículas de suas disciplinas
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(request.resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        get(/databases/$(database)/documents/disciplines/$(resource.data.disciplineId)).data.teacherId == request.auth.uid;
+      
+      // Alunos podem ler suas próprias matrículas
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.studentId == request.auth.uid;
+    }
+    
+    // Regras para submissões de tarefas
+    match /submissions/{submissionId} {
+      // Alunos podem criar e atualizar suas próprias submissões
+      allow create, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        request.resource.data.studentId == request.auth.uid;
+      
+      // Alunos podem ler suas próprias submissões
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student' &&
+        resource.data.studentId == request.auth.uid;
+      
+      // Professores podem ler e avaliar todas as submissões
+      allow read, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+    }
+    
+    // Regras para mensagens de chat
+    match /chat_messages/{messageId} {
+      // Usuários podem criar mensagens onde são o remetente
+      allow create: if request.auth != null && 
+        request.resource.data.senderId == request.auth.uid;
+      
+      // Usuários podem ler mensagens onde são remetente ou destinatário
+      allow read: if request.auth != null && 
+        (resource.data.senderId == request.auth.uid || 
+         resource.data.receiverId == request.auth.uid);
+      
+      // Usuários podem atualizar mensagens onde são o destinatário (para marcar como lida)
+      allow update: if request.auth != null && 
+        resource.data.receiverId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "214420620755",
+    "project_id": "poliedro-pi",
+    "storage_bucket": "poliedro-pi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214420620755:android:0d47ceeffd208145d19b26",
+        "android_client_info": {
+          "package_name": "com.example.portal_polidro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwjDCoye5ELj_8Xd3GbLmtFex-ghVx1Cc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214420620755:android:ccc049ac49cd6950d19b26",
+        "android_client_info": {
+          "package_name": "com.poliedro.portal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwjDCoye5ELj_8Xd3GbLmtFex-ghVx1Cc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
