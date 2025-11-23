@@ -44,6 +44,8 @@ class StudentGrade {
   final double? currentGrade;
   final String? comments;
   final bool hasSubmission;
+  final String? submissionFileUrl;
+  final String? submissionFileName;
 
   StudentGrade({
     required this.studentId,
@@ -52,6 +54,8 @@ class StudentGrade {
     this.currentGrade,
     this.comments,
     this.hasSubmission = false,
+    this.submissionFileUrl,
+    this.submissionFileName,
   });
 
   factory StudentGrade.fromMap(Map<String, dynamic> map) {
@@ -62,6 +66,8 @@ class StudentGrade {
       currentGrade: map['currentGrade']?.toDouble(),
       comments: map['comments'],
       hasSubmission: map['hasSubmission'] ?? false,
+      submissionFileUrl: map['submissionFileUrl'],
+      submissionFileName: map['submissionFileName'],
     );
   }
 
@@ -73,6 +79,8 @@ class StudentGrade {
       'currentGrade': currentGrade,
       'comments': comments,
       'hasSubmission': hasSubmission,
+      'submissionFileUrl': submissionFileUrl,
+      'submissionFileName': submissionFileName,
     };
   }
 
@@ -83,6 +91,8 @@ class StudentGrade {
     double? currentGrade,
     String? comments,
     bool? hasSubmission,
+    String? submissionFileUrl,
+    String? submissionFileName,
   }) {
     return StudentGrade(
       studentId: studentId ?? this.studentId,
@@ -91,6 +101,8 @@ class StudentGrade {
       currentGrade: currentGrade ?? this.currentGrade,
       comments: comments ?? this.comments,
       hasSubmission: hasSubmission ?? this.hasSubmission,
+      submissionFileUrl: submissionFileUrl ?? this.submissionFileUrl,
+      submissionFileName: submissionFileName ?? this.submissionFileName,
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/firestore_service.dart';
 import '../../models/batch_grading_model.dart';
 import '../../theme/app_theme.dart';
@@ -114,6 +115,21 @@ class _BatchGradingScreenState extends State<BatchGradingScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openSubmissionFile(String? fileUrl) async {
+    if (fileUrl == null || fileUrl.isEmpty) return;
+    
+    try {
+      final Uri url = Uri.parse(fileUrl);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        _showError('Não foi possível abrir o arquivo');
+      }
+    } catch (e) {
+      _showError('Erro ao abrir arquivo: $e');
+    }
   }
 
   @override
@@ -545,6 +561,48 @@ class _BatchGradingScreenState extends State<BatchGradingScreen> {
               ),
             ],
           ),
+          if (student.hasSubmission && student.submissionFileName != null) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => _openSubmissionFile(student.submissionFileUrl),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.attach_file,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        student.submissionFileName!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      Icons.open_in_new,
+                      color: AppTheme.primaryColor,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

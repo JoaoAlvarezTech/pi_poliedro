@@ -765,7 +765,7 @@ class FirestoreService {
   // Buscar dados para avaliação em lote de uma atividade
   Future<BatchGradingModel> getBatchGradingData(String activityId) async {
     try {
-      // Buscar dados da atividade
+      // PASSO 1: Buscar dados básicos da atividade
       final activityDoc = await _firestore
           .collection(activitiesCollection)
           .doc(activityId)
@@ -776,18 +776,35 @@ class FirestoreService {
       }
 
       final activityData = activityDoc.data() as Map<String, dynamic>;
-      final disciplineId = activityData['disciplineId'] as String;
-      final activityName = activityData['name'] as String;
+      final disciplineId = activityData['disciplineId'] as String? ?? '';
+      final activityName = activityData['name'] as String? ?? 'Atividade';
       final maxGrade = (activityData['maxGrade'] ?? 10.0).toDouble();
 
-      // Buscar alunos matriculados na disciplina
-      final enrollments = await _firestore
-          .collection(studentDisciplinesCollection)
-          .where('disciplineId', isEqualTo: disciplineId)
-          .where('isActive', isEqualTo: true)
-          .get();
+      if (disciplineId.isEmpty) {
+        throw 'Disciplina não encontrada na atividade';
+      }
 
-      if (enrollments.docs.isEmpty) {
+      // PASSO 2: Buscar TODAS as submissões da atividade (já funciona)
+      List<SubmissionModel> allSubmissions = [];
+      try {
+        allSubmissions = await getActivitySubmissions(activityId);
+      } catch (e) {
+        // Se falhar, continua sem submissões
+        allSubmissions = [];
+      }
+
+      // Criar mapa de submissões por studentId com informações do arquivo
+      final submissionsByStudent = <String, SubmissionModel>{};
+      for (var submission in allSubmissions) {
+        submissionsByStudent[submission.studentId] = submission;
+      }
+
+      // PASSO 3: Buscar alunos matriculados na disciplina
+      List<StudentDisciplineModel> enrollments = [];
+      try {
+        enrollments = await getDisciplineStudents(disciplineId);
+      } catch (e) {
+        // Se falhar, retorna vazio
         return BatchGradingModel(
           activityId: activityId,
           disciplineId: disciplineId,
@@ -797,59 +814,79 @@ class FirestoreService {
         );
       }
 
-      // Buscar dados dos alunos
-      List<String> studentIds = enrollments.docs
-          .map((doc) => doc.data()['studentId'] as String)
-          .toList();
+      if (enrollments.isEmpty) {
+        return BatchGradingModel(
+          activityId: activityId,
+          disciplineId: disciplineId,
+          activityName: activityName,
+          maxGrade: maxGrade,
+          studentGrades: [],
+        );
+      }
 
+      // PASSO 4: Para cada aluno matriculado, buscar seus dados
       List<StudentGrade> studentGrades = [];
+      
+      for (var enrollment in enrollments) {
+        final studentId = enrollment.studentId;
+        
+        if (studentId.isEmpty) continue;
 
-      for (String studentId in studentIds) {
-        // Buscar dados do aluno
-        final studentDoc = await _firestore
-            .collection(usersCollection)
-            .doc(studentId)
-            .get();
+        try {
+          // Buscar dados do aluno
+          final studentDoc = await _firestore
+              .collection(usersCollection)
+              .doc(studentId)
+              .get();
+          
+          if (!studentDoc.exists) continue;
+          
+          final studentData = studentDoc.data() as Map<String, dynamic>;
+          if (studentData['userType'] != 'student') continue;
+          
+          final studentName = studentData['name'] as String? ?? 'Aluno sem nome';
+          final studentRa = studentData['ra'] as String?;
 
-        if (!studentDoc.exists) continue;
+          // Buscar nota do aluno para esta atividade
+          double? currentGrade;
+          String? comments;
+          
+          try {
+            final gradeId = '${studentId}_$activityId';
+            final gradeDoc = await _firestore
+                .collection(gradesCollection)
+                .doc(gradeId)
+                .get();
+            
+            if (gradeDoc.exists) {
+              final gradeData = gradeDoc.data() as Map<String, dynamic>;
+              currentGrade = (gradeData['grade'] ?? 0.0).toDouble();
+              comments = gradeData['comments'] as String?;
+            }
+          } catch (e) {
+            // Se falhar ao buscar nota, continua sem nota
+            currentGrade = null;
+            comments = null;
+          }
 
-        final studentData = studentDoc.data() as Map<String, dynamic>;
-        final studentName = studentData['name'] as String;
-        final studentRa = studentData['ra'] as String?;
+          // Verificar se tem submissão e obter informações do arquivo
+          final submission = submissionsByStudent[studentId];
+          final hasSubmission = submission != null;
 
-        // Verificar se já tem nota
-        final gradeId = '${studentId}_$activityId';
-        final gradeDoc = await _firestore
-            .collection(gradesCollection)
-            .doc(gradeId)
-            .get();
-
-        double? currentGrade;
-        String? comments;
-        if (gradeDoc.exists) {
-          final gradeData = gradeDoc.data() as Map<String, dynamic>;
-          currentGrade = (gradeData['grade'] ?? 0.0).toDouble();
-          comments = gradeData['comments'] as String?;
+          studentGrades.add(StudentGrade(
+            studentId: studentId,
+            studentName: studentName,
+            studentRa: studentRa,
+            currentGrade: currentGrade,
+            comments: comments,
+            hasSubmission: hasSubmission,
+            submissionFileUrl: submission?.fileUrl,
+            submissionFileName: submission?.fileName,
+          ));
+        } catch (e) {
+          // Se falhar ao processar um aluno, pula para o próximo
+          continue;
         }
-
-        // Verificar se tem submissão
-        final submissionQuery = await _firestore
-            .collection(submissionsCollection)
-            .where('studentId', isEqualTo: studentId)
-            .where('activityId', isEqualTo: activityId)
-            .limit(1)
-            .get();
-
-        final hasSubmission = submissionQuery.docs.isNotEmpty;
-
-        studentGrades.add(StudentGrade(
-          studentId: studentId,
-          studentName: studentName,
-          studentRa: studentRa,
-          currentGrade: currentGrade,
-          comments: comments,
-          hasSubmission: hasSubmission,
-        ));
       }
 
       // Ordenar por nome do aluno
