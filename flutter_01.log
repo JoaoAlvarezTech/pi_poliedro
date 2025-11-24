@@ -1,0 +1,105 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d chrome
+
+## exception
+
+FormatException: FormatException: Unexpected character (at character 1)
+Failed to start the Dart CLI isolate. Could not resolve DartDev snapshot or...
+^
+
+
+```
+#0      _ChunkedJsonParser.fail (dart:convert-patch/convert_patch.dart:1467:5)
+#1      _ChunkedJsonParser.parseNumber (dart:convert-patch/convert_patch.dart:1333:9)
+#2      _ChunkedJsonParser.parse (dart:convert-patch/convert_patch.dart:935:22)
+#3      _JsonStringDecoderSink.addSlice (dart:convert-patch/convert_patch.dart:1555:13)
+#4      _JsonStringDecoderSink.add (dart:convert-patch/convert_patch.dart:1560:5)
+#5      _ConverterStreamEventSink.add (dart:convert/chunked_conversion.dart:70:18)
+#6      _SinkTransformerStreamSubscription._handleData (dart:async/stream_transformers.dart:115:24)
+#7      _rootRunUnary (dart:async/zone.dart:1538:47)
+#8      _CustomZone.runUnary (dart:async/zone.dart:1429:19)
+#9      _CustomZone.runUnaryGuarded (dart:async/zone.dart:1329:7)
+#10     _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#11     _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#12     _SinkTransformerStreamSubscription._add (dart:async/stream_transformers.dart:67:11)
+#13     _EventSinkWrapper.add (dart:async/stream_transformers.dart:13:11)
+#14     _StringAdapterSink.add (dart:convert/string_conversion.dart:228:11)
+#15     _StringAdapterSink.addSlice (dart:convert/string_conversion.dart:233:7)
+#16     _Utf8ConversionSink.addSlice (dart:convert/string_conversion.dart:313:20)
+#17     _Utf8ConversionSink.add (dart:convert/string_conversion.dart:306:5)
+#18     _ConverterStreamEventSink.add (dart:convert/chunked_conversion.dart:70:18)
+#19     _SinkTransformerStreamSubscription._handleData (dart:async/stream_transformers.dart:115:24)
+#20     _rootRunUnary (dart:async/zone.dart:1538:47)
+#21     _CustomZone.runUnary (dart:async/zone.dart:1429:19)
+#22     _CustomZone.runUnaryGuarded (dart:async/zone.dart:1329:7)
+#23     _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#24     _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#25     _SyncStreamControllerDispatch._sendData (dart:async/stream_controller.dart:798:19)
+#26     _StreamController._add (dart:async/stream_controller.dart:663:7)
+#27     _StreamController.add (dart:async/stream_controller.dart:618:5)
+#28     _Socket._onData (dart:io-patch/socket_patch.dart:2912:41)
+#29     _rootRunUnary (dart:async/zone.dart:1546:13)
+#30     _CustomZone.runUnary (dart:async/zone.dart:1429:19)
+#31     _CustomZone.runUnaryGuarded (dart:async/zone.dart:1329:7)
+#32     _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#33     _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#34     _SyncStreamControllerDispatch._sendData (dart:async/stream_controller.dart:798:19)
+#35     _StreamController._add (dart:async/stream_controller.dart:663:7)
+#36     _StreamController.add (dart:async/stream_controller.dart:618:5)
+#37     new _RawSocket.<anonymous closure> (dart:io-patch/socket_patch.dart:2331:31)
+#38     _NativeSocket.issueReadEvent.issue (dart:io-patch/socket_patch.dart:1655:14)
+#39     _microtaskLoop (dart:async/schedule_microtask.dart:40:35)
+#40     _startMicrotaskLoop (dart:async/schedule_microtask.dart:49:5)
+#41     _runPendingImmediateCallback (dart:isolate-patch/isolate_patch.dart:127:13)
+#42     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:194:5)
+```
+
+## flutter doctor
+
+```
+[32m[✓][39m Flutter (Channel stable, 3.35.2, on Microsoft Windows [versÆo 10.0.19045.6216], locale pt-BR) [180ms]
+    [32m•[39m Flutter version 3.35.2 on channel stable at C:\Users\Danilo\Desktop\Maua\FLUTTER\flutter
+    [32m•[39m Upstream repository https://github.com/flutter/flutter.git
+    [32m•[39m Framework revision 05db968908 (20 hours ago), 2025-08-25 10:21:35 -0700
+    [32m•[39m Engine revision a8bfdfc394
+    [32m•[39m Dart version 3.9.0
+    [32m•[39m DevTools version 2.48.0
+    [32m•[39m Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-lldb-debugging
+
+[32m[✓][39m Windows Version (10 Pro 64 bits, 22H2, 2009) [1.064ms]
+
+[31m[✗][39m Android toolchain - develop for Android devices [13ms]
+    [31m✗[39m Unable to locate Android SDK.
+      Install Android Studio from: https://developer.android.com/studio/index.html
+      On first launch it will assist you in installing the Android SDK components.
+      (or visit https://flutter.dev/to/windows-android-setup for detailed instructions).
+      If the Android SDK has been installed to a custom location, please use
+      `flutter config --android-sdk` to update to that location.
+
+
+[32m[✓][39m Chrome - develop for the web [7ms]
+    [32m•[39m Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[31m[✗][39m Visual Studio - develop Windows apps [6ms]
+    [31m✗[39m Visual Studio not installed; this is necessary to develop Windows apps.
+      Download at https://visualstudio.microsoft.com/downloads/.
+      Please install the "Desktop development with C++" workload, including all of its default components
+
+[33m[!][39m Android Studio (not installed) [4ms]
+    [32m•[39m Android Studio not found; download from https://developer.android.com/studio/index.html
+      (or visit https://flutter.dev/to/windows-android-setup for detailed instructions).
+
+[32m[✓][39m Connected device (3 available) [11ms]
+    [32m•[39m Windows (desktop) • windows • windows-x64    • Microsoft Windows [versÆo 10.0.19045.6216]
+    [32m•[39m Chrome (web)      • chrome  • web-javascript • Google Chrome 139.0.7258.155
+    [32m•[39m Edge (web)        • edge    • web-javascript • Microsoft Edge 139.0.3405.125
+
+[32m[✓][39m Network resources [277ms]
+    [32m•[39m All expected network resources are available.
+
+[33m![39m Doctor found issues in 3 categories.
+```
